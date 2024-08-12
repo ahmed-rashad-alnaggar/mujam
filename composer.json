@@ -1,0 +1,47 @@
+{
+    "name": "alnaggar/mujam",
+    "description": "A Laravel/Lumen package for managing translations.",
+    "keywords": [
+        "laravel",
+        "lumen",
+        "translation",
+        "localization"
+    ],
+    "type": "library",
+    "require": {
+        "php": "^7.3|^8.0",
+        "ext-json": "*",
+        "alnaggar/muhawil": "^1.1",
+        "illuminate/config": ">=8.0",
+        "illuminate/console": ">=8.0",
+        "illuminate/database": ">=8.0",
+        "illuminate/support": ">=8.0",
+        "illuminate/translation": ">=8.0",
+        "symfony/finder": ">=5.4"
+    },
+    "license": "MIT",
+    "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
+        "psr-4": {
+            "Alnaggar\\Mujam\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ahmed Muhammad Rashad"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Alnaggar\\Mujam\\MujamServiceProvider",
+                "Alnaggar\\Mujam\\TranslationServiceProvider"
+            ],
+            "aliases": {
+                "Mujam": "Alnaggar\\Mujam\\Facades\\Mujam"
+            }
+        }
+    }
+}
