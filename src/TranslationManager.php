@@ -65,27 +65,13 @@ class TranslationManager implements TranslationManagerContract
     }
 
     /**
-     * Add translation store.
-     * 
-     * @param string $name The name of the store.
-     * @param \Alnaggar\Mujam\Contracts\Store $store The store instance to associate with the given `name`.
-     * @return static
-     */
-    public function addStore(string $name, Store $store)
-    {
-        $this->stores[$name] = $store;
-
-        return $this;
-    }
-
-    /**
      * Retrieve a translation store instance by its name.
      *
      * @param string|null $name The name of the store to retrieve. If `null`, the default store is returned.
      * @throws \InvalidArgumentException If the specified store name is not defined in the configuration.
      * @return \Alnaggar\Mujam\Contracts\Store The store instance associated with the given `name`.
      */
-    public function store(?string $name = null) : Store
+    public function store(?string $name = null): Store
     {
         $name = $name ?? $this->getDefaultStore();
         $stores = $this->getStores();
@@ -98,11 +84,11 @@ class TranslationManager implements TranslationManagerContract
     }
 
     /**
-     * Get the default translation store name.
+     * Get the name of the default translation store.
      *
      * @return string
      */
-    public function getDefaultStore() : string
+    public function getDefaultStore(): string
     {
         return $this->config->get('mujam.default');
     }
@@ -123,7 +109,7 @@ class TranslationManager implements TranslationManagerContract
     /**
      * {@inheritDoc}
      */
-    public function getStores() : array
+    public function getStores(): array
     {
         if (empty($this->stores)) {
             $this->registerStores();
@@ -133,28 +119,18 @@ class TranslationManager implements TranslationManagerContract
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function setStores(array $stores)
-    {
-        $this->stores = $stores;
-
-        return $this;
-    }
-
-    /**
      * Register the predefined stores.
      * 
      * @return void
      */
-    protected function registerStores() : void
+    protected function registerStores(): void
     {
         $stores = $this->config->get('mujam.stores', []);
 
         foreach ($stores as $name => $config) {
             $store = $this->resolve($config);
 
-            $this->addStore($name, $store);
+            $this->stores[$name] = $store;
         }
     }
 
@@ -165,14 +141,14 @@ class TranslationManager implements TranslationManagerContract
      * @throws \InvalidArgumentException
      * @return \Alnaggar\Mujam\Contracts\Store
      */
-    protected function resolve(array $config) : Store
+    protected function resolve(array $config): Store
     {
         $driver = $config['driver'];
 
         if (isset($this->customCreators[$driver])) {
             return $this->callCustomCreator($config);
         } else {
-            $storeMethod = 'create' . ucfirst($driver) . 'Store';
+            $storeMethod = 'create'.ucfirst($driver).'Store';
 
             if (method_exists($this, $storeMethod)) {
                 return $this->{$storeMethod}($config);
@@ -188,7 +164,7 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Contracts\Store
      */
-    protected function callCustomCreator(array $config) : Store
+    protected function callCustomCreator(array $config): Store
     {
         return call_user_func($this->customCreators[$config['driver']], $this->getApplication(), $config);
     }
@@ -199,11 +175,11 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\DatabaseStore
      */
-    protected function createDatabaseStore(array $config) : DatabaseStore
+    protected function createDatabaseStore(array $config): DatabaseStore
     {
         $connection = $this->getApplication()->make('db')->connection($config['connection'] ?? null);
 
-        return new DatabaseStore($connection, $config['table']);
+        return new DatabaseStore($connection, $config['table'], $config['columns']);
     }
 
     /**
@@ -212,9 +188,11 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\JsonStore
      */
-    protected function createJsonStore(array $config) : JsonStore
+    protected function createJsonStore(array $config): JsonStore
     {
-        return new JsonStore($config['paths'], $config['metadata'] ?? []);
+        $flags = $config['flags'] ?? JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT;
+
+        return new JsonStore($config['path'], $flags);
     }
 
     /**
@@ -223,9 +201,13 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\MoStore
      */
-    protected function createMoStore(array $config) : MoStore
+    protected function createMoStore(array $config): MoStore
     {
-        return new MoStore($config['paths'], $config['metadata'] ?? []);
+        $contextDelimiter = $config['context_delimiter'] ?? '::';
+        $pluralDelimiter = $config['plural_delimiter'] ?? '|';
+        $metadata = $config['metadata'] ?? [];
+
+        return new MoStore($config['path'], $contextDelimiter, $pluralDelimiter, $metadata);
     }
 
     /**
@@ -234,9 +216,9 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\PhpStore
      */
-    protected function createPhpStore(array $config) : PhpStore
+    protected function createPhpStore(array $config): PhpStore
     {
-        return new PhpStore($config['paths'], $config['metadata'] ?? []);
+        return new PhpStore($config['path']);
     }
 
     /**
@@ -245,9 +227,13 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\PoStore
      */
-    protected function createPoStore(array $config) : PoStore
+    protected function createPoStore(array $config): PoStore
     {
-        return new PoStore($config['paths'], $config['metadata'] ?? []);
+        $contextDelimiter = $config['context_delimiter'] ?? '::';
+        $pluralDelimiter = $config['plural_delimiter'] ?? '|';
+        $metadata = $config['metadata'] ?? [];
+
+        return new PoStore($config['path'], $contextDelimiter, $pluralDelimiter, $metadata);
     }
 
     /**
@@ -256,9 +242,12 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\XliffStore
      */
-    protected function createXliffStore(array $config) : XliffStore
+    protected function createXliffStore(array $config): XliffStore
     {
-        return new XliffStore($config['paths'], $config['metadata'] ?? []);
+        $sourceLocale = $config['source_locale'] ?? $this->app['translator']->getFallback();
+        $legacy = $config['legacy'] ?? false;
+
+        return new XliffStore($config['path'], $sourceLocale, $legacy);
     }
 
     /**
@@ -267,9 +256,11 @@ class TranslationManager implements TranslationManagerContract
      * @param array $config
      * @return \Alnaggar\Mujam\Stores\YamlStore
      */
-    protected function createYamlStore(array $config) : YamlStore
+    protected function createYamlStore(array $config): YamlStore
     {
-        return new YamlStore($config['paths'], $config['metadata'] ?? []);
+        $dry = $config['dry'] ?? false;
+
+        return new YamlStore($config['path'], $dry);
     }
 
     /**
@@ -298,15 +289,15 @@ class TranslationManager implements TranslationManagerContract
     }
 
     /**
-     * Register a custom driver creator Closure.
+     * Register a custom driver resolver.
      *
      * @param string $driver The driver name.
-     * @param callable $callback The driver creator Closure.
+     * @param callable $resolver The driver creator Closure.
      * @return static
      */
-    public function extend(string $driver, callable $callback)
+    public function extend(string $driver, callable $resolver)
     {
-        $this->customCreators[$driver] = $callback;
+        $this->customCreators[$driver] = $resolver;
 
         return $this;
     }
@@ -316,7 +307,7 @@ class TranslationManager implements TranslationManagerContract
      *
      * @return \Illuminate\Contracts\Foundation\Application The application instance used by the manager.
      */
-    public function getApplication() : Application
+    public function getApplication(): Application
     {
         return $this->app;
     }

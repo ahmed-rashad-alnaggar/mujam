@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('locale');
             $table->text('value');
 
-            $table->unique(['namespace', 'group','locale']);
+            $table->unique(['namespace', 'group', 'locale']);
         });
     }
 

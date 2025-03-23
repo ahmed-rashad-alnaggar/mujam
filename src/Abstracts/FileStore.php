@@ -40,23 +40,14 @@ abstract class FileStore implements Store
     protected $paths;
 
     /**
-     * Metadata for the file.
-     * 
-     * @var array<string, string>
-     */
-    protected $metadata;
-
-    /**
-     * Create new instance.
+     * Create a new instance.
      * 
      * @param array<string>|string $paths
-     * @param array<string, string> $metadata
      * @return void
      */
-    public function __construct($paths, array $metadata = [])
+    public function __construct($paths)
     {
         $this->translator = app('translator');
-        $this->metadata = $metadata;
 
         $this->setPaths((array) $paths);
         $this->setLoader($this->constructLoader());
@@ -68,7 +59,7 @@ abstract class FileStore implements Store
      * 
      * @return array<string>
      */
-    public function getPaths() : array
+    public function getPaths(): array
     {
         return $this->paths;
     }
@@ -91,21 +82,21 @@ abstract class FileStore implements Store
      * 
      * @return \Alnaggar\Muhawil\Interfaces\Loader
      */
-    abstract protected function constructLoader() : Loader;
+    abstract protected function constructLoader(): Loader;
 
     /**
      * Create new Dumper instance to handle dumping translations.
      * 
      * @return \Alnaggar\Muhawil\Interfaces\Dumper
      */
-    abstract protected function constructDumper() : Dumper;
+    abstract protected function constructDumper(): Dumper;
 
     /**
      * Get the Loader instance being used.
      * 
      * @return \Alnaggar\Muhawil\Interfaces\Loader
      */
-    public function getLoader() : Loader
+    public function getLoader(): Loader
     {
         return $this->loader;
     }
@@ -115,7 +106,7 @@ abstract class FileStore implements Store
      * 
      * @return \Alnaggar\Muhawil\Interfaces\Dumper
      */
-    public function getDumper() : Dumper
+    public function getDumper(): Dumper
     {
         return $this->dumper;
     }
@@ -151,7 +142,7 @@ abstract class FileStore implements Store
      * 
      * @return \Symfony\Component\Finder\Finder
      */
-    protected function createFinder() : SymfonyFinder
+    protected function createFinder(): SymfonyFinder
     {
         $finder = SymfonyFinder::create();
 
@@ -172,7 +163,7 @@ abstract class FileStore implements Store
      * @param \Symfony\Component\Finder\SplFileInfo $file
      * @return array
      */
-    protected function loadTranslations(SymfonySplFileInfo $file) : array
+    protected function loadTranslations(SymfonySplFileInfo $file): array
     {
         $translations = [];
         $filepath = $file->getRealPath();
@@ -192,24 +183,19 @@ abstract class FileStore implements Store
      * @param \Symfony\Component\Finder\SplFileInfo $file
      * @return void
      */
-    protected function dumpTranslations(array $translations, SymfonySplFileInfo $file) : void
-    {
-        $filepath = $file->getPathname();
-
-        $this->dumper->dump($translations, $filepath, $this->metadata);
-    }
+    abstract protected function dumpTranslations(array $translations, SymfonySplFileInfo $file): void;
 
     /**
      * Return all supported file extensions.
      * 
      * @return array<string>
      */
-    abstract public function extensions() : array;
+    abstract public function extensions(): array;
 
     /**
      * {@inheritDoc}
      */
-    public function has($key, $locale = null) : bool
+    public function has($key, $locale = null): bool
     {
         return ! is_null($this->get($key, $locale));
     }
@@ -220,7 +206,7 @@ abstract class FileStore implements Store
      * @param string $path
      * @return void
      */
-    protected function deleteFile(string $path) : void
+    protected function deleteFile(string $path): void
     {
         if (@unlink($path)) {
             clearstatcache(false, $path);

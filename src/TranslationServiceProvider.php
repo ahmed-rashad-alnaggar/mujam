@@ -13,7 +13,7 @@ class TranslationServiceProvider extends ServiceProvider implements DeferrablePr
      *
      * @return void
      */
-    public function register() : void
+    public function register(): void
     {
         $this->registerLoader();
 
@@ -38,7 +38,7 @@ class TranslationServiceProvider extends ServiceProvider implements DeferrablePr
      *
      * @return void
      */
-    protected function registerLoader() : void
+    protected function registerLoader(): void
     {
         $this->app->singleton('translation.loader', function ($app) {
             return new TranslationLoader($app['mujam']);
@@ -50,7 +50,7 @@ class TranslationServiceProvider extends ServiceProvider implements DeferrablePr
      *
      * @return array
      */
-    public function provides() : array
+    public function provides(): array
     {
         return ['translator', 'translation.loader'];
     }

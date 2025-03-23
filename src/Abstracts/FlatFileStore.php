@@ -10,10 +10,8 @@ abstract class FlatFileStore extends FileStore implements FlatStore
 {
     /**
      * {@inheritDoc}
-     * 
-     * @return string|null
      */
-    public function get($key, $locale = null, $fallback = false) : ?string
+    public function get($key, $locale = null, $fallback = false): ?string
     {
         $translation = $this->getAll($locale)[$key] ?? null;
 
@@ -31,7 +29,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
     /**
      * {@inheritDoc}
      */
-    public function getAll($locale = null, $fallback = false) : array
+    public function getAll($locale = null, $fallback = false): array
     {
         $translations = [];
 
@@ -57,7 +55,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
     /**
      * {@inheritDoc}
      */
-    public function getLocales() : array
+    public function getLocales(): array
     {
         $locales = [];
 
@@ -98,6 +96,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
             $this->dumpTranslations($newTranslations, $file);
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -125,6 +124,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
             }
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -143,6 +143,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
             $this->deleteFile($file->getPathname());
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -154,7 +155,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
      * @param string $locale
      * @return array<\Symfony\Component\Finder\SplFileInfo>
      */
-    protected function getFilesForUpsert(string $locale) : array
+    protected function getFilesForUpsert(string $locale): array
     {
         $files = [];
 
@@ -166,9 +167,9 @@ abstract class FlatFileStore extends FileStore implements FlatStore
         foreach ($locales as $locale) {
             $resolvedFiles = $this->getFiles($locale);
 
-            // If the user attempts to dump translations for a newly supported locale
-            // and has not yet created the corresponding files,
-            // generate the path so that the dumper can create the file.
+            // If translations are being added for a newly supported locale
+            // and the corresponding files do not exist,
+            // construct the file path so that the dumper can create the appropriate file.
             if (empty($resolvedFiles)) {
                 // Ensure this is not a mass operation.
                 if ($locale !== '*') {
@@ -190,11 +191,11 @@ abstract class FlatFileStore extends FileStore implements FlatStore
      * @param string $locale
      * @return array<\Symfony\Component\Finder\SplFileInfo>
      */
-    protected function getFiles(string $locale) : array
+    protected function getFiles(string $locale): array
     {
         // Glob patterns.
-        $localePattern = '{' . str_replace('|', ',', $locale) . '}';
-        $extensionPattern = '{' . implode(',', $this->extensions()) . '}';
+        $localePattern = '{'.str_replace('|', ',', $locale).'}';
+        $extensionPattern = '{'.implode(',', $this->extensions()).'}';
 
         // Convert to regex here because Symfony interprets glob patterns 
         // that start and end with {} as regex, preventing proper conversion to regex.

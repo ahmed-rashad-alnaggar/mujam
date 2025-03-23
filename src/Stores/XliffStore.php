@@ -8,22 +8,41 @@ use Alnaggar\Mujam\Abstracts\FlatFileStore;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 /**
+ * @property \Alnaggar\Muhawil\Loaders\XliffFileLoader $loader Translations loader.
+ * @property \Alnaggar\Muhawil\Dumpers\XliffFileDumper $dumper Translations dumper.
+ * 
  * @link https://github.com/ahmed-rashad-alnaggar/muhawil?tab=readme-ov-file#xliff
  */
 class XliffStore extends FlatFileStore
 {
     /**
-     * Create new instance.
+     * The source language of the translations.
+     * 
+     * @var string
+     */
+    protected $sourceLocale;
+
+    /**
+     * Determines whether to confrom to XLIFF 1.2 (true) or XLIFF 2.0 (false).
+     * 
+     * @var bool
+     */
+    protected $legacy;
+
+    /**
+     * Create a new instance.
      * 
      * @param array<string>|string $paths
-     * @param array<string, string> $metadata
+     * @param string $sourceLocale
+     * @param bool $legacy
      * @return void
      */
-    public function __construct($paths, array $metadata = [])
+    public function __construct($paths, string $sourceLocale = 'en', bool $legacy = false)
     {
-        parent::__construct($paths);
+        $this->sourceLocale = $sourceLocale;
+        $this->legacy = $legacy;
 
-        $this->metadata['source_locale'] = $metadata['source_locale'] ?? $this->translator->getFallback();
+        parent::__construct($paths);
     }
 
     /**
@@ -31,7 +50,7 @@ class XliffStore extends FlatFileStore
      * 
      * @return \Alnaggar\Muhawil\Loaders\XliffFileLoader
      */
-    protected function constructLoader() : XliffFileLoader
+    protected function constructLoader(): XliffFileLoader
     {
         return new XliffFileLoader;
     }
@@ -41,7 +60,7 @@ class XliffStore extends FlatFileStore
      * 
      * @return \Alnaggar\Muhawil\Dumpers\XliffFileDumper
      */
-    protected function constructDumper() : XliffFileDumper
+    protected function constructDumper(): XliffFileDumper
     {
         return new XliffFileDumper;
     }
@@ -49,23 +68,19 @@ class XliffStore extends FlatFileStore
     /**
      * {@inheritDoc}
      */
-    protected function dumpTranslations(array $translations, SymfonySplFileInfo $file) : void
+    protected function dumpTranslations(array $translations, SymfonySplFileInfo $file): void
     {
         $filepath = $file->getPathname();
 
         $targetLocale = $file->getFilenameWithoutExtension();
 
-        $arguments = [
-            'target_locale' => $targetLocale
-        ] + $this->metadata;
-
-        $this->dumper->dump($translations, $filepath, $arguments);
+        $this->dumper->dump($translations, $filepath, $this->sourceLocale, $targetLocale, $this->legacy, $targetLocale);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function extensions() : array
+    public function extensions(): array
     {
         return ['xliff', 'xlf'];
     }

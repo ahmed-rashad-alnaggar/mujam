@@ -11,11 +11,11 @@ class MujamServiceProvider extends ServiceProvider
      * 
      * @return void
      */
-    public function register() : void
+    public function register(): void
     {
         $this->app->singleton('mujam', TranslationManager::class);
 
-        $this->mergeConfigFrom(__DIR__ . '/../config/mujam.php', 'mujam');
+        $this->mergeConfigFrom(__DIR__.'/../config/mujam.php', 'mujam');
     }
 
     /**
@@ -23,7 +23,7 @@ class MujamServiceProvider extends ServiceProvider
      * 
      * @return void
      */
-    public function boot() : void
+    public function boot(): void
     {
         $this->registerCommands();
         $this->registerPublishes();
@@ -34,7 +34,7 @@ class MujamServiceProvider extends ServiceProvider
      * 
      * @return void
      */
-    public function registerCommands() : void
+    public function registerCommands(): void
     {
         $this->commands([
             \Alnaggar\Mujam\Console\Commands\AddCommand::class,
@@ -49,14 +49,14 @@ class MujamServiceProvider extends ServiceProvider
      * 
      * @return void
      */
-    public function registerPublishes() : void
+    public function registerPublishes(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/mujam.php' => config_path('mujam.php')
-        ], 'config');
+            __DIR__.'/../config/mujam.php' => config_path('mujam.php')
+        ], 'mujam-config');
 
         $this->publishes([
-            __DIR__ . '/../database/migrations/' => database_path('migrations')
-        ], 'migrations');
+            __DIR__.'/../database/migrations/' => database_path('migrations')
+        ], 'mujam-migrations');
     }
 }

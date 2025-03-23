@@ -28,7 +28,7 @@ class AddCommand extends Command
      * 
      * @return int
      */
-    public function handle() : int
+    public function handle(): int
     {
         $store = $this->getLaravel()->make('mujam')->store($this->option('store'));
 
@@ -54,7 +54,7 @@ class AddCommand extends Command
      * 
      * @return array<\Symfony\Component\Console\Input\InputArgument>
      */
-    public function getArguments() : array
+    public function getArguments(): array
     {
         return [
             new InputArgument(
@@ -81,7 +81,7 @@ class AddCommand extends Command
      * 
      * @return array<\Symfony\Component\Console\Input\InputOption>
      */
-    public function getOptions() : array
+    public function getOptions(): array
     {
         return [
             new InputOption(

@@ -31,15 +31,50 @@ class DatabaseStore implements StructuredStore
     protected $table;
 
     /**
-     * Create new instance.
+     * Namespace column name in the database table.
+     * 
+     * @var string
+     */
+    protected $namespaceColumnName;
+
+    /**
+     * Group column name in the database table.
+     * 
+     * @var string
+     */
+    protected $groupColumnName;
+
+    /**
+     * Locale column name in the database table.
+     * 
+     * @var string
+     */
+    protected $localeColumnName;
+
+    /**
+     * Value column name in the database table.
+     * 
+     * @var string
+     */
+    protected $valueColumnName;
+
+    /**
+     * Create a new instance.
      * 
      * @param \Illuminate\Database\ConnectionInterface $connection
      * @param string $table
+     * @param array<string, string> $columns
+     * @return void
      */
-    public function __construct(ConnectionInterface $connection, string $table)
+    public function __construct(ConnectionInterface $connection, string $table, array $columns)
     {
         $this->translator = app('translator');
+
         $this->table = $table;
+        $this->namespaceColumnName = $columns['namespace'];
+        $this->groupColumnName = $columns['group'];
+        $this->localeColumnName = $columns['locale'];
+        $this->valueColumnName = $columns['value'];
 
         $this->setConnection($connection);
     }
@@ -77,13 +112,13 @@ class DatabaseStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function getAll($group, $namespace = '*', $locale = null, $fallback = false) : array
+    public function getAll($group, $namespace = '*', $locale = null, $fallback = false): array
     {
         $translations = [];
 
         $locale = $locale ?? $this->translator->getLocale();
 
-        $values = $this->getRecords($group, $namespace, $locale)->get('value')->toArray();
+        $values = $this->getRecords($group, $namespace, $locale)->get($this->valueColumnName)->toArray();
 
         foreach ($values as $value) {
             $dbTranslations = json_decode($value->value, true);
@@ -103,12 +138,12 @@ class DatabaseStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function getStructure() : array
+    public function getStructure(): array
     {
         $structure = [];
 
         $records = $this->getRecords('*', null, '*')
-            ->get(['namespace', 'group', 'locale'])
+            ->get([$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName])
             ->toArray();
 
         foreach ($records as $record) {
@@ -145,19 +180,20 @@ class DatabaseStore implements StructuredStore
         }, $records);
 
         array_walk($records, function (&$record) use ($translations) {
-            $oldTranslations = json_decode($record['value'], true);
+            $oldTranslations = json_decode($record[$this->valueColumnName], true);
             $newTranslations = array_replace_recursive($oldTranslations, $translations);
 
-            $record['value'] = json_encode($newTranslations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $record[$this->valueColumnName] = json_encode($newTranslations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         });
 
-        $this->getRecords('*', null, '*') // To get the table.
+        $this->getRecords('*', null, '*') // To get the table
             ->upsert(
                 $records,
-                ['namespace', 'group', 'locale'],
-                ['value']
+                [$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName],
+                [$this->valueColumnName]
             );
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -181,10 +217,11 @@ class DatabaseStore implements StructuredStore
             if (empty($translations)) {
                 $row->delete();
             } else {
-                $row->update(['value' => json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
+                $row->update([$this->valueColumnName => json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
             }
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -199,6 +236,7 @@ class DatabaseStore implements StructuredStore
 
         $this->getRecords($group, $namespace, $locale)->delete();
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -207,7 +245,7 @@ class DatabaseStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function has($key, $locale = null) : bool
+    public function has($key, $locale = null): bool
     {
         return ! is_null($this->get($key, $locale));
     }
@@ -220,7 +258,7 @@ class DatabaseStore implements StructuredStore
      * @param string $locale
      * @return array<array<string, string>>
      */
-    protected function getRecordsForUpsert(string $group, string $namespace, string $locale) : array
+    protected function getRecordsForUpsert(string $group, string $namespace, string $locale): array
     {
         $records = [];
 
@@ -237,10 +275,10 @@ class DatabaseStore implements StructuredStore
                     // Ensure this is not a mass operation.
                     if ($group !== '*' && $locale !== '*') {
                         $record = new \stdClass;
-                        $record->namespace = $namespace;
-                        $record->group = $group;
-                        $record->locale = $locale;
-                        $record->value = '{}';
+                        $record->{$this->namespaceColumnName} = $namespace;
+                        $record->{$this->groupColumnName} = $group;
+                        $record->{$this->localeColumnName} = $locale;
+                        $record->{$this->valueColumnName} = '{}';
 
                         $resolvedRecords[] = $record;
                     }
@@ -261,20 +299,20 @@ class DatabaseStore implements StructuredStore
      * @param string $locale
      * @return \Illuminate\Database\Query\Builder
      */
-    protected function getRecords(string $group, ?string $namespace, string $locale) : Builder
+    protected function getRecords(string $group, ?string $namespace, string $locale): Builder
     {
         $query = $this->getConnection()->table($this->table);
 
         if (! is_null($namespace)) {
-            $query->whereIn('namespace', explode('|', $namespace));
+            $query->whereIn($this->namespaceColumnName, explode('|', $namespace));
         }
 
         if ($group !== '*') {
-            $query->where('group', '=', $group);
+            $query->where($this->groupColumnName, '=', $group);
         }
 
         if ($locale !== '*') {
-            $query->whereIn('locale', explode('|', $locale));
+            $query->whereIn($this->localeColumnName, explode('|', $locale));
         }
 
         return $query;
@@ -285,7 +323,7 @@ class DatabaseStore implements StructuredStore
      * 
      * @return \Illuminate\Database\ConnectionInterface
      */
-    public function getConnection() : ConnectionInterface
+    public function getConnection(): ConnectionInterface
     {
         return $this->connection;
     }

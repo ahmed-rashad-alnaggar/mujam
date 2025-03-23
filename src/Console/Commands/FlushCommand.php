@@ -28,7 +28,7 @@ class FlushCommand extends Command
      * 
      * @return int
      */
-    public function handle() : int
+    public function handle(): int
     {
         $store = $this->getLaravel()->make('mujam')->store($this->option('store'));
 
@@ -53,7 +53,7 @@ class FlushCommand extends Command
      * 
      * @return array<InputArgument>
      */
-    public function getArguments() : array
+    public function getArguments(): array
     {
         return [
             new InputArgument(
@@ -70,7 +70,7 @@ class FlushCommand extends Command
      * 
      * @return array<\Symfony\Component\Console\Input\InputOption>
      */
-    public function getOptions() : array
+    public function getOptions(): array
     {
         return [
             new InputOption(

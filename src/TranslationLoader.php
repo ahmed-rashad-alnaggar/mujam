@@ -48,7 +48,7 @@ class TranslationLoader implements Loader
      * @param string|null $namespace
      * @return array
      */
-    public function load($locale, $group, $namespace = null) : array
+    public function load($locale, $group, $namespace = null): array
     {
         $namespace = $namespace ?? '*';
 
@@ -65,7 +65,7 @@ class TranslationLoader implements Loader
      * @param string $locale
      * @return array
      */
-    protected function loadFlat($locale) : array
+    protected function loadFlat($locale): array
     {
         $loaded = $this->loadPackagesJson($locale);
         $stores = $this->translationManager->getStores();
@@ -86,7 +86,7 @@ class TranslationLoader implements Loader
      * @param string $locale
      * @return array<string, string>
      */
-    protected function loadPackagesJson(string $locale) : array
+    protected function loadPackagesJson(string $locale): array
     {
         $loaded = [];
 
@@ -114,7 +114,7 @@ class TranslationLoader implements Loader
      * @param string $namespace
      * @return array
      */
-    protected function loadStructured($locale, $group, $namespace) : array
+    protected function loadStructured($locale, $group, $namespace): array
     {
         $loaded = $this->loadPackagesPhp($locale, $group, $namespace);
         $stores = $this->translationManager->getStores();
@@ -137,7 +137,7 @@ class TranslationLoader implements Loader
      * @param string $namespace
      * @return array
      */
-    protected function loadPackagesPhp(string $locale, string $group, string $namespace) : array
+    protected function loadPackagesPhp(string $locale, string $group, string $namespace): array
     {
         $loaded = [];
 
@@ -161,7 +161,7 @@ class TranslationLoader implements Loader
      * @param string $path
      * @return void
      */
-    public function addNamespace($namespace, $path) : void
+    public function addNamespace($namespace, $path): void
     {
         $this->phpPaths[$namespace] = $path;
     }
@@ -172,7 +172,7 @@ class TranslationLoader implements Loader
      * @param string $path
      * @return void
      */
-    public function addJsonPath($path) : void
+    public function addJsonPath($path): void
     {
         $this->jsonPaths[] = $path;
     }
@@ -182,7 +182,7 @@ class TranslationLoader implements Loader
      *
      * @return array
      */
-    public function namespaces() : array
+    public function namespaces(): array
     {
         return $this->phpPaths;
     }

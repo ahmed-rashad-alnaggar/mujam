@@ -42,7 +42,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function getAll($group, $namespace = '*', $locale = null, $fallback = false) : array
+    public function getAll($group, $namespace = '*', $locale = null, $fallback = false): array
     {
         $translations = [];
 
@@ -68,7 +68,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function getStructure() : array
+    public function getStructure(): array
     {
         $structure = [];
 
@@ -132,6 +132,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             $this->dumpTranslations($newTranslations, $file);
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -157,6 +158,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             }
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -201,6 +203,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             $this->deleteEmptySubDirectories($localeDirectory);
         }
 
+        // Clear cached translations.
         $this->translator->setLoaded([]);
 
         return $this;
@@ -214,7 +217,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      * @param string $locale
      * @return array<\Symfony\Component\Finder\SplFileInfo>
      */
-    protected function getFilesForUpsert(string $group, string $namespace, string $locale) : array
+    protected function getFilesForUpsert(string $group, string $namespace, string $locale): array
     {
         $files = [];
 
@@ -231,9 +234,9 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             foreach ($locales as $locale) {
                 $resolvedFiles = $this->getFiles($group, $namespace, $locale);
 
-                // If the user attempts to dump translations for a newly supported namespace or locale
-                // and has not yet created the corresponding files,
-                // generate the path so that the dumper can create the file.
+                // If translations are being added for a newly supported namespace/locale
+                // and the corresponding files do not exist,
+                // construct the file path so that the dumper can create the appropriate file.
                 if (empty($resolvedFiles)) {
                     // Ensure this is not a mass operation.
                     if ($group !== '*' && $locale !== '*') {
@@ -259,12 +262,12 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      * @param string $locale
      * @return array<\Symfony\Component\Finder\SplFileInfo>
      */
-    protected function getFiles(string $group, ?string $namespace, string $locale) : array
+    protected function getFiles(string $group, ?string $namespace, string $locale): array
     {
         [$filename, $fileSubPath] = $this->parseGroup($group);
 
         // Glob patterns.
-        $extensionPattern = '{' . implode(',', $this->extensions()) . '}';
+        $extensionPattern = '{'.implode(',', $this->extensions()).'}';
         $namePattern = "{$filename}.{$extensionPattern}";
 
         // Regex patterns.
@@ -279,7 +282,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
                 }
             });
 
-            $namespacePattern = '(' . implode('|', $namespaces) . ')';
+            $namespacePattern = '('.implode('|', $namespaces).')';
         } else {
             $namespacePattern = '';
         }
@@ -301,7 +304,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      * @param string $group
      * @return array
      */
-    protected function parseGroup(string $group) : array
+    protected function parseGroup(string $group): array
     {
         $directories = explode('/', $group);
 
@@ -321,7 +324,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      * @param string $path
      * @return void
      */
-    protected function deleteEmptySubDirectories(string $path) : void
+    protected function deleteEmptySubDirectories(string $path): void
     {
         if (! is_dir($path)) {
             return;
