@@ -1,8 +1,8 @@
 # Mujam - A Translation Manager
 
-![I Stand With Palestine Badge](./images/PalestineBadge.svg)
+![I Stand With Palestine Badge](./arts/PalestineBadge.svg)
 
-![I Stand With Palestine Banner](./images/PalestineBanner.svg)
+![I Stand With Palestine Banner](./arts/PalestineBanner.svg)
 
 **Mujam** is a Laravel translation management package that provides a flexible way to handle translations in your application. It supports various translation stores and allows for easy customization.
 
@@ -14,6 +14,7 @@ The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which re
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Stores](#stores)
+- [Eloquent Integration](#eloquent-integration--hastranslations-trait)
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [License](#license)
@@ -32,6 +33,13 @@ Then, publish the configuration file:
 php artisan vendor:publish --tag="mujam-config"
 ```
 
+> [!NOTE]  
+> If you intend to use the [database store](#database-store), either publish the default migration or create your own table and update the store config.
+>
+> ```bash
+> php artisan vendor:publish --tag="mujam-migrations"
+> ```
+
 ## Configuration
 
 The configuration file `config/mujam.php` contains the following keys:
@@ -45,11 +53,13 @@ The configuration file `config/mujam.php` contains the following keys:
   - [po](#po-store)
   - [xliff](#xliff-store)
   - [yaml](#yaml-store)
+  
+  Refer to [creating custom store](#creating-custom-store) for guidance on supporting additional store types.
 
-Refer to [creating custom store](#creating-custom-store) for guidance on supporting additional store types.
+  > [!NOTE]
+  > If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
 
-> [!NOTE]
-> If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
+- **model_translations_store**: The default **structured** store name used by the [`HasTranslations`](#eloquent-integration--hastranslations-trait) trait for handling Eloquent model translations.
 
 ## Flat and Structured Stores
 
@@ -330,6 +340,8 @@ You can also use Laravel's `__` function or any other translation retrieval func
     - `group`: The column name for the group.
     - `locale`: The column name for the locale.
     - `value`: The column name for the translation value.
+    - `created_at`: The column name for the created_at timestamp.
+    - `updated_at`: The column name for the updated_at timestamp.
 
 ### JSON Store
 
@@ -392,6 +404,141 @@ public function boot()
             // return the custom store instance.
         }
     );
+}
+```
+
+## Eloquent Integration — `HasTranslations` Trait
+
+The `HasTranslations` trait provides an elegant way to integrate **Mujam**’s translation system directly into your **Eloquent models**.  
+It allows models to manage localized attributes seamlessly through any configured **structured store** ([database](#database-store) store recommended) using the `model_translations_store` key in `config/mujam.php`.
+
+### Setup The Trait
+
+Simply use the trait in your Eloquent model then define a dot-notated array of the translatable attributes:
+
+```php
+use Alnaggar\Mujam\Concerns\Eloquent\HasTranslations;
+
+class Post extends Model
+{
+    use HasTranslations;
+
+    /**
+     * The model's translatable attributes.
+     *
+     * @var array<string>
+     */
+    protected function translatables(): array
+    {
+        return [
+            'title',
+            'content',
+            'meta.description',
+        ];
+    }
+}
+```
+
+> [!NOTE]
+> Defining translatables is optional — the trait can automatically discover existing translation keys (e.g., seeded or pre-stored).
+
+### Retrieving Model Translations
+
+Retrieve a translated attribute directly through the model’s properties:
+
+```php
+$post = Post::find(1);
+
+$post->title; // Automatically returns the current locale translation
+```
+
+You can also manually specify a locale and fallback behavior:
+
+```php
+$post->getTranslation('title', 'fr'); // Returns French translation with falling back to the app fullback locale
+$post->getTranslation('title', 'fr', false); // No fallback
+$post->getTranslation('title', 'fr', 'ar');  // Fallbacks to Arabic
+```
+
+When dealing with nested attributes, the trait injects translations automatically:
+
+```php
+// Assuming 'meta.description' is translatable
+$post->meta; 
+// => ['description' => 'Translated value']
+```
+
+### Setting Model Translations
+
+Set translations per locale directly:
+
+```php
+$post->setTranslation('title', 'Welcome to Mujam!', 'en');
+$post->setTranslation('title', 'مرحباً بكم في معجم!', 'ar');
+
+// OR
+
+$post->setTranslation('title', [
+    'en' => 'Welcome to Mujam!',
+    'ar' => 'مرحباً بكم في معجم!',
+]);
+```
+
+Or use Laravel-style attribute syntax for the current app locale:
+
+```php
+$post->title = 'Bonjour à Mujam!';
+```
+
+You can also set nested attributes:
+
+```php
+$post->meta = [
+    'description' => 'A translations management project',
+];
+```
+
+### Removing Model Translations
+
+Remove translations for a specific key and locale:
+
+```php
+$post->title = null; // Remove translation for the current app locale
+
+//OR
+
+$post->removeTranslation('title', 'en');
+```
+
+You can also remove nested attributes:
+
+```php
+$post->meta = [
+    'description' => null
+];
+
+// OR
+
+$post->removeTranslation('meta.description', 'en');
+```
+
+### Saving & Persisting Model Translations
+
+All translation changes are **queued** and automatically persisted after the model is **saved**:
+
+```php
+$post->save(); // Updates/Adds/Removes translations in the configured store
+```
+
+**When the model is deleted, all associated translations are automatically flushed.**
+
+### Checking Translations
+
+You can check if a translation exists for a specific key and locale:
+
+```php
+if ($post->hasTranslation('content', 'ar')) {
+    // Arabic translation exists
 }
 ```
 

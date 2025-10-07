@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Alnaggar\Mujam\TranslationManager setApplication() setApplication(\Illuminate\Contracts\Foundation\Application $app) 
  * Set the application instance to be used by the translation manager.
  *
- * @method static array|string|null get() get(string $key, string|null $locale = null, string|bool|null $fallback = false) 
+ * @method static array|string|null get() get(string $key, string|null $locale = null, string|bool|null $fallback = null) 
  * Retrieve the translation for the specified `key` and `locale`, or `null` if not found.
  * 
  * If `locale` is `null`, the current application locale is used.
@@ -47,7 +47,7 @@ use Illuminate\Support\Facades\Facade;
  * 
  * If `locale` is `null`, the current application locale is used.
  * 
- * @method static array getAll() getAll(string|null $locale = null, string|bool|null $fallback = false) 
+ * @method static array getAll() getAll(string|null $locale = null, string|bool|null $fallback = null) 
  * (**Flat Store Method**) Retrieve all translations for the specified `locale`, including fallbacks if applicable.
  * 
  * If `locale` is `null`, the current application locale is used.
@@ -99,7 +99,7 @@ use Illuminate\Support\Facades\Facade;
  * - If a specific locale is provided, all translations are removed for that locale.
  * - Multiple locales can also be provided, separated by `|`.
  * 
- * @method static array getAll() getAll(string $group, string $namespace = '*', string|null $locale = null, string|bool|null $fallback = false)  
+ * @method static array getAll() getAll(string $group, string $namespace = '*', string|null $locale = null, string|bool|null $fallback = null)  
  * (**Structured Store Method**) Retrieve all translations for the specified `group`, `namespace`, and `locale`, including fallbacks if applicable.
  * 
  * The `namespace` can be set to `*` to indicate the default namespace.

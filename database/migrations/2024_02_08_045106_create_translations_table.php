@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('group');
             $table->string('locale');
             $table->text('value');
+            $table->timestamps();
 
             $table->unique(['namespace', 'group', 'locale']);
         });

@@ -14,7 +14,7 @@ abstract class FileStore implements Store
     /**
      * Laravel Translator instance.
      * 
-     * @var \Illuminate\Contracts\Translation\Translator
+     * @var \Illuminate\Translation\Translator
      */
     protected $translator;
 
@@ -197,7 +197,7 @@ abstract class FileStore implements Store
      */
     public function has($key, $locale = null): bool
     {
-        return ! is_null($this->get($key, $locale));
+        return ! is_null($this->get($key, $locale, false));
     }
 
     /**

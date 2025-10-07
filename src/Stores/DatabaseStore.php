@@ -6,6 +6,7 @@ use Alnaggar\Mujam\Contracts\StructuredStore;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Date;
 
 class DatabaseStore implements StructuredStore
 {
@@ -59,6 +60,20 @@ class DatabaseStore implements StructuredStore
     protected $valueColumnName;
 
     /**
+     * Created_At column name in the database table.
+     * 
+     * @var string
+     */
+    protected $createdAtColumnName;
+
+    /**
+     * Updated_At column name in the database table.
+     * 
+     * @var string
+     */
+    protected $updatedAtColumnName;
+
+    /**
      * Create a new instance.
      * 
      * @param \Illuminate\Database\ConnectionInterface $connection
@@ -75,6 +90,8 @@ class DatabaseStore implements StructuredStore
         $this->groupColumnName = $columns['group'];
         $this->localeColumnName = $columns['locale'];
         $this->valueColumnName = $columns['value'];
+        $this->createdAtColumnName = $columns['created_at'];
+        $this->updatedAtColumnName = $columns['updated_at'];
 
         $this->setConnection($connection);
     }
@@ -82,11 +99,11 @@ class DatabaseStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function get($key, $locale = null, $fallback = false)
+    public function get($key, $locale = null, $fallback = null)
     {
         [$namespace, $group, $item] = $this->translator->parseKey($key);
 
-        $translations = $this->getAll($group, $namespace, $locale);
+        $translations = $this->getAll($group, $namespace, $locale, false);
 
         $translation = Arr::get($translations, $item);
 
@@ -102,7 +119,9 @@ class DatabaseStore implements StructuredStore
             if ($fallback !== false) {
                 $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
 
-                $translation = $this->get($key, $fallback);
+                if ($locale !== $fallback) {
+                    $translation = $this->get($key, $fallback, false);
+                }
             }
         }
 
@@ -112,7 +131,7 @@ class DatabaseStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function getAll($group, $namespace = '*', $locale = null, $fallback = false): array
+    public function getAll($group, $namespace = '*', $locale = null, $fallback = null): array
     {
         $translations = [];
 
@@ -121,18 +140,20 @@ class DatabaseStore implements StructuredStore
         $values = $this->getRecords($group, $namespace, $locale)->get($this->valueColumnName)->toArray();
 
         foreach ($values as $value) {
-            $dbTranslations = json_decode($value->value, true);
-            $translations = array_replace_recursive($translations, $dbTranslations);
+            $dbTranslations = json_decode($value->{$this->valueColumnName}, true);
+            $translations = array_replace($translations, $dbTranslations);
         }
 
         if ($fallback !== false) {
             $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
 
-            $fallbackTranslations = $this->getAll($group, $namespace, $fallback);
-            $translations = array_replace_recursive($fallbackTranslations, $translations);
+            if ($locale !== $fallback) {
+                $fallbackTranslations = $this->getAll($group, $namespace, $fallback, false);
+                $translations = array_replace($fallbackTranslations, Arr::whereNotNull($translations));
+            }
         }
 
-        return $translations;
+        return Arr::undot($translations);
     }
 
     /**
@@ -147,9 +168,9 @@ class DatabaseStore implements StructuredStore
             ->toArray();
 
         foreach ($records as $record) {
-            $namespace = $record->namespace;
-            $group = $record->group;
-            $locale = $record->locale;
+            $namespace = $record->{$this->namespaceColumnName};
+            $group = $record->{$this->groupColumnName};
+            $locale = $record->{$this->localeColumnName};
 
             $structure[$namespace][$locale][] = $group;
         }
@@ -170,27 +191,35 @@ class DatabaseStore implements StructuredStore
      */
     public function update(array $translations, $group, $namespace = '*', $locale = null)
     {
-        $translations = Arr::undot($translations);
+        $translations = Arr::dot($translations);
 
         $locale = $locale ?? $this->translator->getLocale();
 
         $records = $this->getRecordsForUpsert($group, $namespace, $locale);
-        $records = array_map(function ($record) {
+        $records = array_map(static function ($record): array {
             return get_object_vars($record);
         }, $records);
 
         array_walk($records, function (&$record) use ($translations) {
             $oldTranslations = json_decode($record[$this->valueColumnName], true);
-            $newTranslations = array_replace_recursive($oldTranslations, $translations);
+            $newTranslations = array_replace($oldTranslations, $translations);
 
             $record[$this->valueColumnName] = json_encode($newTranslations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            if (isset($record[$this->updatedAtColumnName])) {
+                $record[$this->updatedAtColumnName] = Date::now();
+            } else {
+                $timestamp = Date::now();
+                $record[$this->createdAtColumnName] = $timestamp;
+                $record[$this->updatedAtColumnName] = $timestamp;
+            }
         });
 
-        $this->getRecords('*', null, '*') // To get the table
+        $this->getRecords('*', null, '*') // Build table query
             ->upsert(
                 $records,
                 [$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName],
-                [$this->valueColumnName]
+                [$this->valueColumnName, $this->createdAtColumnName, $this->updatedAtColumnName]
             );
 
         // Clear cached translations.
@@ -207,18 +236,33 @@ class DatabaseStore implements StructuredStore
         $locale = $locale ?? $this->translator->getLocale();
 
         $records = $this->getRecords($group, $namespace, $locale)->get()->toArray();
+        $toUpdateRecords = [];
+        $toDeleteRecordLocales = [];
 
         foreach ($records as $record) {
-            $translations = json_decode($record->value, true);
+            $translations = json_decode($record->{$this->valueColumnName}, true);
             Arr::forget($translations, $items);
 
-            $row = $this->getRecords($record->group, $record->namespace, $record->locale);
-
             if (empty($translations)) {
-                $row->delete();
+                $toDeleteRecordLocales[] = $record->{$this->localeColumnName};
             } else {
-                $row->update([$this->valueColumnName => json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
+                $record->{$this->valueColumnName} = json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                $record->{$this->updatedAtColumnName} = Date::now();
+                $toUpdateRecords[] = get_object_vars($record);
             }
+        }
+
+        if (! empty($toUpdateRecords)) {
+            $this->getRecords('*', null, '*') // Build table query
+                ->upsert($toUpdateRecords,
+                    [$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName],
+                    [$this->valueColumnName, $this->updatedAtColumnName]
+                );
+        }
+
+        if (! empty($toDeleteRecordLocales)) {
+            $locales = implode('|', array_unique($toDeleteRecordLocales));
+            $this->getRecords($group, $namespace, $locales)->delete();
         }
 
         // Clear cached translations.
@@ -247,7 +291,7 @@ class DatabaseStore implements StructuredStore
      */
     public function has($key, $locale = null): bool
     {
-        return ! is_null($this->get($key, $locale));
+        return ! is_null($this->get($key, $locale, false));
     }
 
     /**

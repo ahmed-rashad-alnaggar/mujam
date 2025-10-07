@@ -16,7 +16,7 @@ interface FlatStore extends Store
      *                                      the specified `locale` only).
      * @return array An array of translations for the specified `locale`, including fallbacks if applicable.
      */
-    public function getAll($locale = null, $fallback = false): array;
+    public function getAll($locale = null, $fallback = null): array;
 
     /**
      * Retrieve all existing locales.

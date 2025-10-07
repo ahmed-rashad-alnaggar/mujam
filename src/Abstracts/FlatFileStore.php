@@ -3,6 +3,7 @@
 namespace Alnaggar\Mujam\Abstracts;
 
 use Alnaggar\Mujam\Contracts\FlatStore;
+use Illuminate\Support\Arr;
 use Symfony\Component\Finder\Glob as SymfonyGlob;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
@@ -11,15 +12,17 @@ abstract class FlatFileStore extends FileStore implements FlatStore
     /**
      * {@inheritDoc}
      */
-    public function get($key, $locale = null, $fallback = false): ?string
+    public function get($key, $locale = null, $fallback = null): ?string
     {
-        $translation = $this->getAll($locale)[$key] ?? null;
+        $translation = $this->getAll($locale, false)[$key] ?? null;
 
         if (is_null($translation)) {
             if ($fallback !== false) {
                 $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
 
-                $translation = $this->get($key, $fallback);
+                if ($locale !== $fallback) {
+                    $translation = $this->get($key, $fallback, false);
+                }
             }
         }
 
@@ -29,7 +32,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
     /**
      * {@inheritDoc}
      */
-    public function getAll($locale = null, $fallback = false): array
+    public function getAll($locale = null, $fallback = null): array
     {
         $translations = [];
 
@@ -45,8 +48,10 @@ abstract class FlatFileStore extends FileStore implements FlatStore
         if ($fallback !== false) {
             $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
 
-            $fallbackTranslations = $this->getAll($fallback);
-            $translations = array_replace($fallbackTranslations, $translations);
+            if ($locale !== $fallback) {
+                $fallbackTranslations = $this->getAll($fallback, false);
+                $translations = array_replace($fallbackTranslations, Arr::whereNotNull($translations));
+            }
         }
 
         return $translations;

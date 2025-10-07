@@ -72,7 +72,7 @@ class TranslationLoader implements Loader
 
         foreach ($stores as $store) {
             if ($store instanceof FlatStore) {
-                $translations = $store->getAll($locale);
+                $translations = $store->getAll($locale, false);
                 $loaded = array_replace($loaded, $translations);
             }
         }
@@ -121,7 +121,7 @@ class TranslationLoader implements Loader
 
         foreach ($stores as $store) {
             if ($store instanceof StructuredStore) {
-                $translations = $store->getAll($group, $namespace, $locale);
+                $translations = $store->getAll($group, $namespace, $locale, false);
                 $loaded = array_replace_recursive($loaded, $translations);
             }
         }

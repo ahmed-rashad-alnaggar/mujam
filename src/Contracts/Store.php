@@ -3,7 +3,7 @@
 namespace Alnaggar\Mujam\Contracts;
 
 /**
- * @method array getAll() getAll(string|null $locale = null, string|bool|null $fallback = false) 
+ * @method array getAll() getAll(string|null $locale = null, string|bool|null $fallback = null) 
  * (**Flat Store Method**) Retrieve all translations for the specified `locale`, including fallbacks if applicable.
  * 
  * If `locale` is `null`, the current application locale is used. 
@@ -55,7 +55,7 @@ namespace Alnaggar\Mujam\Contracts;
  * - If a specific locale is provided, all translations are removed for that locale.
  * - Multiple locales can also be provided, separated by `|`.
  * 
- * @method array getAll() getAll(string $group, string $namespace = '*', string|null $locale = null, string|bool|null $fallback = false)  
+ * @method array getAll() getAll(string $group, string $namespace = '*', string|null $locale = null, string|bool|null $fallback = null)  
  * (**Structured Store Method**) Retrieve all translations for the specified `group`, `namespace`, and `locale`, including fallbacks if applicable.
  * 
  * The `namespace` can be set to `*` to indicate the default namespace.
@@ -137,7 +137,7 @@ interface Store
      *                                      the specified `locale` only).
      * @return string|null The translation for the specified `key` and `locale`, or `null` if not found.
      */
-    public function get($key, $locale = null, $fallback = false);
+    public function get($key, $locale = null, $fallback = null);
 
     /**
      * Check if a translation exists.

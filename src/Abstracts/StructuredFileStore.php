@@ -11,15 +11,15 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function get($key, $locale = null, $fallback = false)
+    public function get($key, $locale = null, $fallback = null)
     {
         [$namespace, $group, $item] = $this->translator->parseKey($key);
 
-        $translations = $this->getAll($group, $namespace, $locale);
+        $translations = $this->getAll($group, $namespace, $locale, false);
 
         $translation = Arr::get($translations, $item);
 
-        // For empty translation file return null.
+        // For empty translation file nullify the translation.
         if ($translation === []) {
             if ($translations === []) {
                 if (is_null($item)) {
@@ -32,7 +32,9 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             if ($fallback !== false) {
                 $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
 
-                $translation = $this->get($key, $fallback);
+                if ($locale !== $fallback) {
+                    $translation = $this->get($key, $fallback, false);
+                }
             }
         }
 
@@ -42,7 +44,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
     /**
      * {@inheritDoc}
      */
-    public function getAll($group, $namespace = '*', $locale = null, $fallback = false): array
+    public function getAll($group, $namespace = '*', $locale = null, $fallback = null): array
     {
         $translations = [];
 
@@ -51,18 +53,20 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         $files = $this->getFiles($group, $namespace, $locale);
 
         foreach ($files as $file) {
-            $fileTranslations = $this->loadTranslations($file);
-            $translations = array_replace_recursive($translations, $fileTranslations);
+            $fileTranslations = Arr::dot($this->loadTranslations($file));
+            $translations = array_replace($translations, $fileTranslations);
         }
 
         if ($fallback !== false) {
             $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
 
-            $fallbackTranslations = $this->getAll($group, $namespace, $fallback);
-            $translations = array_replace_recursive($fallbackTranslations, $translations);
+            if ($locale !== $fallback) {
+                $fallbackTranslations = $this->getAll($group, $namespace, $fallback, false);
+                $translations = array_replace($fallbackTranslations, Arr::whereNotNull($translations));
+            }
         }
 
-        return $translations;
+        return Arr::undot($translations);
     }
 
     /**
@@ -119,15 +123,15 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      */
     public function update(array $translations, $group, $namespace = '*', $locale = null)
     {
-        $translations = Arr::undot($translations);
+        $translations = Arr::dot($translations);
 
         $locale = $locale ?? $this->translator->getLocale();
 
         $files = $this->getFilesForUpsert($group, $namespace, $locale);
 
         foreach ($files as $file) {
-            $oldTranslations = $this->loadTranslations($file);
-            $newTranslations = array_replace_recursive($oldTranslations, $translations);
+            $oldTranslations = Arr::dot($this->loadTranslations($file));
+            $newTranslations = array_replace($oldTranslations, $translations);
 
             $this->dumpTranslations($newTranslations, $file);
         }
@@ -148,7 +152,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         $files = $this->getFiles($group, $namespace, $locale);
 
         foreach ($files as $file) {
-            $translations = $this->loadTranslations($file);
+            $translations = Arr::dot($this->loadTranslations($file));
             Arr::forget($translations, $items);
 
             if (empty($translations)) {

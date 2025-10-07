@@ -16,7 +16,7 @@ interface StructuredStore extends Store
      *                                      the specified `locale` only).
      * @return array|string|null The translation for the specified `key` and `locale`, or `null` if not found.
      */
-    public function get($key, $locale = null, $fallback = false);
+    public function get($key, $locale = null, $fallback = null);
 
     /**
      * Retrieve all translations for the specified `group`, `namespace`, and `locale`.
@@ -31,14 +31,14 @@ interface StructuredStore extends Store
      *                                      the specified `locale` only).
      * @return array An array of translations for the specified `group`, `namespace`, and `locale`, including fallbacks if applicable.
      */
-    public function getAll($group, $namespace = '*', $locale = null, $fallback = false) : array;
+    public function getAll($group, $namespace = '*', $locale = null, $fallback = null): array;
 
     /**
      * Get the store structure as an associative array with namespaces as the top-level keys, locales as the second-level keys, and groups as the third-level values.
      * 
      * @return array The structured array of translations organized by namespaces, locales, and groups.
      */
-    public function getStructure() : array;
+    public function getStructure(): array;
 
     /**
      * Add translations for the specified `group`, `namespace`, and `locale(s)`.
