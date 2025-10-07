@@ -141,7 +141,7 @@ class TranslationManager implements TranslationManagerContract
      * @throws \InvalidArgumentException
      * @return \Alnaggar\Mujam\Contracts\Store
      */
-    protected function resolve(array $config): Store
+    public function resolve(array $config): Store
     {
         $driver = $config['driver'];
 

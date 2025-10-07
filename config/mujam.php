@@ -100,10 +100,22 @@ return [
     | Has Translations Trait Store
     |--------------------------------------------------------------------------
     |
-    | The default **structured** store name used by the HasTranslations trait
+    | The **structured** store name/config used by the HasTranslations trait
     | for handling Eloquent model translations.
     |
     */
 
-    'model_translations_store' => 'database'
+    'model_translations_store' => [
+        'driver' => 'database',
+        'connection' => null,
+        'table' => 'translations',
+        'columns' => [
+            'namespace' => 'namespace',
+            'group' => 'group',
+            'locale' => 'locale',
+            'value' => 'value',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+        ],
+    ]
 ];

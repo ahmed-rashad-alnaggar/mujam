@@ -56,10 +56,14 @@ The configuration file `config/mujam.php` contains the following keys:
   
   Refer to [creating custom store](#creating-custom-store) for guidance on supporting additional store types.
 
-  > [!NOTE]
-  > If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
+> [!NOTE]
+> If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
 
-- **model_translations_store**: The default **structured** store name used by the [`HasTranslations`](#eloquent-integration--hastranslations-trait) trait for handling Eloquent model translations.
+- **model_translations_store**: The default **structured** store name/config used by the [`HasTranslations`](#eloquent-integration--hastranslations-trait) trait for handling Eloquent model translations.
+
+> [!NOTE]
+> If the store you use for model translations is **dedicated exclusively** to that purpose, do **not** include it in the global `stores` list.
+Instead, define its configuration under the `model_translations_store` key directly.
 
 ## Flat and Structured Stores
 

@@ -12,9 +12,9 @@ trait HasTranslations
     /**
      * Model structured translations store.
      * 
-     * @var string
+     * @var \Alnaggar\Mujam\Contracts\StructuredStore
      */
-    protected $translationStore;
+    protected static $translationStore;
 
     /**
      * A dot notation array of the translatable properties.
@@ -62,18 +62,6 @@ trait HasTranslations
             $model->getTranslationStore()
                 ->flush($model->getKey(), static::class, '*');
         });
-    }
-
-    /**
-     * Initalize The HasTranslations trait.
-     * 
-     * @return void
-     */
-    public function initializeHasTranslations(): void
-    {
-        if (! isset($this->translationStore)) {
-            $this->translationStore = config('mujam.model_translations_store');
-        }
     }
 
     /**
@@ -423,8 +411,18 @@ trait HasTranslations
      * 
      * @return \Alnaggar\Mujam\Contracts\StructuredStore
      */
-    protected function getTranslationStore(): StructuredStore
+    protected static function getTranslationStore(): StructuredStore
     {
-        return Mujam::store($this->translationStore);
+        if (isset(static::$translationStore)) {
+            return static::$translationStore;
+        }
+
+        $translationStore = config('mujam.model_translations_store');
+
+        if (is_array($translationStore)) {
+            return static::$translationStore = Mujam::resolve($translationStore);
+        }
+
+        return static::$translationStore = Mujam::store($translationStore);
     }
 }
