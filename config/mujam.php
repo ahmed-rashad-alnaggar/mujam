@@ -158,7 +158,7 @@ return [
             'value' => 'value',
             'created_at' => 'created_at',
             'updated_at' => 'updated_at',
-            'cache' => false, // Frequent updates make caching impractical
         ],
+        'cache' => false, // Frequent updates make caching impractical
     ]
 ];
