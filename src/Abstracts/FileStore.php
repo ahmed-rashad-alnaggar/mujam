@@ -40,18 +40,48 @@ abstract class FileStore implements Store
     protected $paths;
 
     /**
+     * Indicates whether caching is enabled for translations.
+     *
+     * @var bool
+     */
+    protected $cacheEnabled;
+
+    /**
+     * The cache store used to store translation data.
+     *
+     * @var string|null
+     */
+    protected $cacheStore;
+
+    /**
+     * The prefix applied to all cache keys for translations.
+     *
+     * @var string
+     */
+    protected $cachePrefix;
+
+    /**
+     * The cache lifetime in seconds before translation data is invalidated.
+     *
+     * @var int|null
+     */
+    protected $cacheLifetime;
+
+    /**
      * Create a new instance.
      * 
      * @param array<string>|string $paths
+     * @param array<string, string>|bool $cache
      * @return void
      */
-    public function __construct($paths)
+    public function __construct($paths, $cache = false)
     {
         $this->translator = app('translator');
 
-        $this->setPaths((array) $paths);
-        $this->setLoader($this->constructLoader());
-        $this->setDumper($this->constructDumper());
+        $this->setPaths((array) $paths)
+            ->setLoader($this->constructLoader())
+            ->setDumper($this->constructDumper())
+            ->setCache($cache);
     }
 
     /**
@@ -133,6 +163,28 @@ abstract class FileStore implements Store
     public function setDumper(Dumper $dumper)
     {
         $this->dumper = $dumper;
+
+        return $this;
+    }
+
+    /**
+     * Configure cache settings for translations.
+     *
+     * @param array|bool $cache
+     * @return static
+     */
+    public function setCache($cache)
+    {
+        if ($cache) {
+            $cache = (array) $cache;
+
+            $this->cacheEnabled = $cache['enabled'] ?? $this->cacheEnabled ?? true;
+            $this->cacheStore = $cache['store'] ?? $this->cacheStore ?? null;
+            $this->cachePrefix = $cache['prefix'] ?? $this->cachePrefix ?? static::class;
+            $this->cacheLifetime = $cache['lifetime'] ?? $this->cacheLifetime ?? 9999999999;
+        } else {
+            $this->cacheEnabled = false;
+        }
 
         return $this;
     }

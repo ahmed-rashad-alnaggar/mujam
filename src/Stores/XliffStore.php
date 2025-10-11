@@ -35,14 +35,15 @@ class XliffStore extends FlatFileStore
      * @param array<string>|string $paths
      * @param string $sourceLocale
      * @param bool $legacy
+     * @param array<string, string>|bool $cache
      * @return void
      */
-    public function __construct($paths, string $sourceLocale = 'en', bool $legacy = false)
+    public function __construct($paths, string $sourceLocale = 'en', bool $legacy = false, $cache = false)
     {
         $this->sourceLocale = $sourceLocale;
         $this->legacy = $legacy;
 
-        parent::__construct($paths);
+        parent::__construct($paths, $cache);
     }
 
     /**

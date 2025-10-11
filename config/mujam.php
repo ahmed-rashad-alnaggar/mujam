@@ -43,44 +43,80 @@ return [
         'php' => [
             'driver' => 'php',
             'path' => lang_path(),
+            'cache' => [
+                'enabled' => true,
+                'store' => null, // Use application's default cache store
+                'prefix' => 'mujam.php',
+                'lifetime' => 9999999999, // Forever
+            ],
         ],
 
         'json' => [
             'driver' => 'json',
             'path' => lang_path(),
-            // 'flags' => JSON_PRETTY_PRINT | JSON_UNESCAPED_LINE_TERMINATORS,
+            //'flags' => JSON_PRETTY_PRINT | JSON_UNESCAPED_LINE_TERMINATORS,
+            'cache' => [
+                'enabled' => true,
+                'store' => null,
+                'prefix' => 'mujam.json',
+                'lifetime' => 9999999999,
+            ],
         ],
 
-        /* 'mo' => [
+        /*'mo' => [
             'driver' => 'mo',
             'path' => lang_path(),
             'context_delimiter' => '::',
             'plural_delimiter' => '|',
             'metadata' => [],
+            'cache' => [
+                'enabled' => true,
+                'store' => null,
+                'prefix' => 'mujam.mo',
+                'lifetime' => 9999999999,
+            ],
         ],*/
 
-        /* 'po' => [
+        /*'po' => [
             'driver' => 'po',
             'path' => lang_path(),
             'context_delimiter' => '::',
             'plural_delimiter' => '|',
             'metadata' => [],
+            'cache' => [
+                'enabled' => true,
+                'store' => null,
+                'prefix' => 'mujam.po',
+                'lifetime' => 9999999999,
+            ],
         ],*/
 
-        /* 'xliff' => [
+        /*'xliff' => [
             'driver' => 'xliff',
             'path' => lang_path(),
             'source_locale' => null, // Use application's fallback locale
             'legacy' => false,
+            'cache' => [
+                'enabled' => true,
+                'store' => null,
+                'prefix' => 'mujam.xliff',
+                'lifetime' => 9999999999,
+            ],
         ],*/
 
-        /* 'yaml' => [
+        /*'yaml' => [
             'driver' => 'yaml',
             'path' => lang_path(),
             'dry' => true,
+            'cache' => [
+                'enabled' => true,
+                'store' => null,
+                'prefix' => 'mujam.yaml',
+                'lifetime' => 9999999999,
+            ],
         ],*/
 
-        /* 'database' => [
+        /*'database' => [
             'driver' => 'database',
             'connection' => null, // Use application's default database connection
             'table' => 'translations',
@@ -91,6 +127,12 @@ return [
                 'value' => 'value',
                 'created_at' => 'created_at',
                 'updated_at' => 'updated_at',
+            ],
+            'cache' => [
+                'enabled' => true,
+                'store' => null,
+                'prefix' => 'mujam.database',
+                'lifetime' => 9999999999,
             ],
         ],*/
     ],
@@ -116,6 +158,7 @@ return [
             'value' => 'value',
             'created_at' => 'created_at',
             'updated_at' => 'updated_at',
+            'cache' => false, // Frequent updates make caching impractical
         ],
     ]
 ];

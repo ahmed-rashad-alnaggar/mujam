@@ -122,6 +122,16 @@ namespace Alnaggar\Mujam\Contracts;
  * - If `*`, the translations are removed from all available locales.
  * - If a specific locale is provided, translations are removed from that locale.
  * - Multiple locales can also be provided, separated by `|`.
+ * 
+ * @method \Alnaggar\Mujam\Contracts\Store setCache() setCache(array|bool $cache = false)
+ * Configure cache settings for translations.
+ * 
+ * When an `array` is provided, the following keys are supported:
+ * - `enabled` (`bool`): Whether caching is enabled. Defaults to `true`.
+ * - `store` (`string`|`null`): The cache store to use. Defaults to application's default.
+ * - `prefix` (`string`): Prefix applied to all cache keys. Defaults to the `class` name.
+ * - `lifetime` (`int`): Cache lifetime in seconds before invalidation.
+ * Pass `false` to disable caching entirely.
  */
 interface Store
 {

@@ -45,15 +45,16 @@ class MoStore extends FlatFileStore
      * @param array<string>|string $paths
      * @param string|null $contextDelimiter
      * @param string $pluralDelimiter
+     * @param array<string, string>|bool $cache
      * @param array $metadata
      */
-    public function __construct($paths, ?string $contextDelimiter = '::', string $pluralDelimiter = '|', array $metadata = [])
+    public function __construct($paths, ?string $contextDelimiter = '::', string $pluralDelimiter = '|', array $metadata = [], $cache = false)
     {
         $this->contextDelimiter = $contextDelimiter;
         $this->pluralDelimiter = $pluralDelimiter;
         $this->metadata = $metadata;
 
-        parent::__construct($paths);
+        parent::__construct($paths, $cache);
     }
 
     /**

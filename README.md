@@ -14,6 +14,7 @@ The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which re
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Stores](#stores)
+- [Caching](#caching)
 - [Eloquent Integration](#eloquent-integration--hastranslations-trait)
 - [Contributing](#contributing)
 - [Credits](#credits)
@@ -79,7 +80,7 @@ To integrate Mujam into your application, you can use its translation features t
 
 You can call functions directly on the facade to interact with the default store, or use the `store()` method to target a specific store.
 
-Below are examples of how to utilize the facade functions:
+**Below are examples of how to utilize the facade functions:**
 
 ### Retrieving Translation
 
@@ -410,6 +411,35 @@ public function boot()
     );
 }
 ```
+
+## Caching
+
+**All** translation stores in **Mujam** support caching to improve performance and reduce repeated file or database reads.
+Caching behavior is fully configurable through the `cache` key in each store’s configuration.
+
+Caching can be customized per store to control how long translations remain valid, where they are stored, and how cache keys are organized.
+
+**Example PHP cache configuration:**
+
+```php
+'stores' => [
+    'php' => [
+        'driver' => 'php',
+        'path' => lang_path(),
+        'cache' => [
+            'enabled' => true,
+            'store' => null, // Use application's default cache store
+            'prefix' => 'mujam.php',
+            'lifetime' => 9999999999, // Forever
+        ],
+    ],
+]
+```
+
+Caching can be disabled by setting `enabled` to `false`, or by setting the entire `cache` key to `false`.
+
+> [!NOTE]
+> It is strongly recommended to disable caching for [**Eloquent model translations**](#eloquent-integration--hastranslations-trait), as they frequently change, so caching will be impractical.
 
 ## Eloquent Integration — `HasTranslations` Trait
 

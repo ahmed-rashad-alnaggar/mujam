@@ -6,7 +6,9 @@ use Alnaggar\Mujam\Contracts\StructuredStore;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Str;
 
 class DatabaseStore implements StructuredStore
 {
@@ -74,14 +76,43 @@ class DatabaseStore implements StructuredStore
     protected $updatedAtColumnName;
 
     /**
+     * Indicates whether caching is enabled for translations.
+     *
+     * @var bool
+     */
+    protected $cacheEnabled;
+
+    /**
+     * The cache store used to store translation data.
+     *
+     * @var string|null
+     */
+    protected $cacheStore;
+
+    /**
+     * The prefix applied to all cache keys for translations.
+     *
+     * @var string
+     */
+    protected $cachePrefix;
+
+    /**
+     * The cache lifetime in seconds before translation data is invalidated.
+     *
+     * @var int|null
+     */
+    protected $cacheLifetime;
+
+    /**
      * Create a new instance.
      * 
      * @param \Illuminate\Database\ConnectionInterface $connection
      * @param string $table
      * @param array<string, string> $columns
+     * @param array<string, string>|bool $cache
      * @return void
      */
-    public function __construct(ConnectionInterface $connection, string $table, array $columns)
+    public function __construct(ConnectionInterface $connection, string $table, array $columns, $cache = false)
     {
         $this->translator = app('translator');
 
@@ -93,7 +124,8 @@ class DatabaseStore implements StructuredStore
         $this->createdAtColumnName = $columns['created_at'];
         $this->updatedAtColumnName = $columns['updated_at'];
 
-        $this->setConnection($connection);
+        $this->setConnection($connection)
+            ->setCache($cache);
     }
 
     /**
@@ -133,16 +165,20 @@ class DatabaseStore implements StructuredStore
      */
     public function getAll($group, $namespace = '*', $locale = null, $fallback = null): array
     {
-        $translations = [];
-
         $locale = $locale ?? $this->translator->getLocale();
 
-        $values = $this->getRecords($group, $namespace, $locale)->get($this->valueColumnName)->toArray();
+        $translations = $this->remember($group, $namespace, $locale, function () use ($group, $namespace, $locale): array {
+            $translations = [];
 
-        foreach ($values as $value) {
-            $dbTranslations = json_decode($value->{$this->valueColumnName}, true);
-            $translations = array_replace($translations, $dbTranslations);
-        }
+            $values = $this->getRecords($group, $namespace, $locale)->get($this->valueColumnName)->toArray();
+
+            foreach ($values as $value) {
+                $dbTranslations = json_decode($value->{$this->valueColumnName}, true);
+                $translations = array_replace($translations, $dbTranslations);
+            }
+
+            return $translations;
+        });
 
         if ($fallback !== false) {
             $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
@@ -223,6 +259,7 @@ class DatabaseStore implements StructuredStore
             );
 
         // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -266,6 +303,7 @@ class DatabaseStore implements StructuredStore
         }
 
         // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -281,6 +319,7 @@ class DatabaseStore implements StructuredStore
         $this->getRecords($group, $namespace, $locale)->delete();
 
         // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -292,6 +331,95 @@ class DatabaseStore implements StructuredStore
     public function has($key, $locale = null): bool
     {
         return ! is_null($this->get($key, $locale, false));
+    }
+
+    /**
+     * Retrieve and cache translations for the given namespace, group, and locale.
+     *
+     * @param string $group
+     * @param string|null $namespace
+     * @param string $locale
+     * @param \Closure $callback
+     * @return array
+     */
+    protected function remember(string $group, ?string $namespace, string $locale, \Closure $callback): array
+    {
+        if ($this->cacheEnabled) {
+            if (! is_null($namespace)) {
+                if (! Str::contains($namespace, '|')) {
+                    if (! Str::contains($locale, ['*', '|'])) {
+                        if (! Str::contains($group, '*')) {
+                            return Cache::store($this->cacheStore)
+                                ->remember("{$this->cachePrefix}.{$namespace}.{$locale}.{$group}", $this->cacheLifetime, $callback);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $callback();
+    }
+
+    /**
+     * Forget cached translations for the given namespace(s), group(s), and locale(s).
+     *
+     * @param string $group
+     * @param string|null $namespace
+     * @param string $locale
+     * @return void
+     */
+    protected function forget(string $group, ?string $namespace, string $locale): void
+    {
+        if (! $this->cacheEnabled) {
+            return;
+        }
+
+        if (! is_null($namespace)) {
+            if (! Str::contains($namespace, '|')) {
+                if (! Str::contains($locale, ['*', '|'])) {
+                    if (! Str::contains($group, '*')) {
+                        Cache::store($this->cacheStore)
+                            ->forget("{$this->cachePrefix}.{$namespace}.{$locale}.{$group}");
+
+                        return;
+                    }
+                }
+            }
+        }
+
+        $keyCombinations = [];
+        $storeStructure = $this->getStructure();
+
+        $targetNamespaces = is_null($namespace)
+            ? array_keys($storeStructure)
+            : explode('|', $namespace);
+
+        $targetLocales = ($locale === '*')
+            ? null // A null value will signify a wildcard match later
+            : explode('|', $locale);
+
+        foreach ($storeStructure as $currentNamespace => $locales) {
+            if (! in_array($currentNamespace, $targetNamespaces)) {
+                continue;
+            }
+
+            foreach ($locales as $currentLocale => $groups) {
+                if (! is_null($targetLocales) && ! in_array($currentLocale, $targetLocales)) {
+                    continue;
+                }
+
+                foreach ($groups as $currentGroup) {
+                    if ($group === '*' || $currentGroup === $group) {
+                        $keyCombinations[] = "{$currentNamespace}.{$currentLocale}.{$currentGroup}";
+                    }
+                }
+            }
+        }
+
+        foreach ($keyCombinations as $keyCombination) {
+            Cache::store($this->cacheStore)
+                ->forget("{$this->cachePrefix}.{$keyCombination}");
+        }
     }
 
     /**
@@ -381,6 +509,28 @@ class DatabaseStore implements StructuredStore
     public function setConnection(ConnectionInterface $connection)
     {
         $this->connection = $connection;
+
+        return $this;
+    }
+
+    /**
+     * Configure cache settings for translations.
+     *
+     * @param array|bool $cache
+     * @return static
+     */
+    public function setCache($cache)
+    {
+        if ($cache) {
+            $cache = (array) $cache;
+
+            $this->cacheEnabled = $cache['enabled'] ?? $this->cacheEnabled ?? true;
+            $this->cacheStore = $cache['store'] ?? $this->cacheStore ?? null;
+            $this->cachePrefix = $cache['prefix'] ?? $this->cachePrefix ?? static::class;
+            $this->cacheLifetime = $cache['lifetime'] ?? $this->cacheLifetime ?? 9999999999;
+        } else {
+            $this->cacheEnabled = false;
+        }
 
         return $this;
     }

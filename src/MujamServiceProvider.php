@@ -36,12 +36,14 @@ class MujamServiceProvider extends ServiceProvider
      */
     public function registerCommands(): void
     {
-        $this->commands([
-            \Alnaggar\Mujam\Console\Commands\AddCommand::class,
-            \Alnaggar\Mujam\Console\Commands\UpdateCommand::class,
-            \Alnaggar\Mujam\Console\Commands\RemoveCommand::class,
-            \Alnaggar\Mujam\Console\Commands\FlushCommand::class
-        ]);
+        if (app()->runningInConsole()) {
+            $this->commands([
+                \Alnaggar\Mujam\Console\Commands\AddCommand::class,
+                \Alnaggar\Mujam\Console\Commands\UpdateCommand::class,
+                \Alnaggar\Mujam\Console\Commands\RemoveCommand::class,
+                \Alnaggar\Mujam\Console\Commands\FlushCommand::class
+            ]);
+        }
     }
 
     /**

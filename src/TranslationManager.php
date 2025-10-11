@@ -178,8 +178,9 @@ class TranslationManager implements TranslationManagerContract
     protected function createDatabaseStore(array $config): DatabaseStore
     {
         $connection = $this->getApplication()->make('db')->connection($config['connection'] ?? null);
+        $cache = $config['cache'] ?? false;
 
-        return new DatabaseStore($connection, $config['table'], $config['columns']);
+        return new DatabaseStore($connection, $config['table'], $config['columns'], $cache);
     }
 
     /**
@@ -191,8 +192,9 @@ class TranslationManager implements TranslationManagerContract
     protected function createJsonStore(array $config): JsonStore
     {
         $flags = $config['flags'] ?? JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT;
+        $cache = $config['cache'] ?? false;
 
-        return new JsonStore($config['path'], $flags);
+        return new JsonStore($config['path'], $flags, $cache);
     }
 
     /**
@@ -206,8 +208,9 @@ class TranslationManager implements TranslationManagerContract
         $contextDelimiter = $config['context_delimiter'] ?? '::';
         $pluralDelimiter = $config['plural_delimiter'] ?? '|';
         $metadata = $config['metadata'] ?? [];
+        $cache = $config['cache'] ?? false;
 
-        return new MoStore($config['path'], $contextDelimiter, $pluralDelimiter, $metadata);
+        return new MoStore($config['path'], $contextDelimiter, $pluralDelimiter, $metadata, $cache);
     }
 
     /**
@@ -218,7 +221,9 @@ class TranslationManager implements TranslationManagerContract
      */
     protected function createPhpStore(array $config): PhpStore
     {
-        return new PhpStore($config['path']);
+        $cache = $config['cache'] ?? false;
+
+        return new PhpStore($config['path'], $cache);
     }
 
     /**
@@ -232,8 +237,9 @@ class TranslationManager implements TranslationManagerContract
         $contextDelimiter = $config['context_delimiter'] ?? '::';
         $pluralDelimiter = $config['plural_delimiter'] ?? '|';
         $metadata = $config['metadata'] ?? [];
+        $cache = $config['cache'] ?? false;
 
-        return new PoStore($config['path'], $contextDelimiter, $pluralDelimiter, $metadata);
+        return new PoStore($config['path'], $contextDelimiter, $pluralDelimiter, $metadata, $cache);
     }
 
     /**
@@ -246,8 +252,9 @@ class TranslationManager implements TranslationManagerContract
     {
         $sourceLocale = $config['source_locale'] ?? $this->app['translator']->getFallback();
         $legacy = $config['legacy'] ?? false;
+        $cache = $config['cache'] ?? false;
 
-        return new XliffStore($config['path'], $sourceLocale, $legacy);
+        return new XliffStore($config['path'], $sourceLocale, $legacy, $cache);
     }
 
     /**
@@ -259,8 +266,9 @@ class TranslationManager implements TranslationManagerContract
     protected function createYamlStore(array $config): YamlStore
     {
         $dry = $config['dry'] ?? false;
+        $cache = $config['cache'] ?? false;
 
-        return new YamlStore($config['path'], $dry);
+        return new YamlStore($config['path'], $dry, $cache);
     }
 
     /**

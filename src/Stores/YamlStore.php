@@ -27,13 +27,14 @@ class YamlStore extends StructuredFileStore
      * 
      * @param array<string>|string $paths
      * @param bool $dry
+     * @param array<string, string>|bool $cache
      * @return void
      */
-    public function __construct($paths, bool $dry = true)
+    public function __construct($paths, bool $dry = true, $cache)
     {
         $this->dry = $dry;
 
-        parent::__construct($paths);
+        parent::__construct($paths, $cache);
     }
 
     /**
@@ -41,7 +42,7 @@ class YamlStore extends StructuredFileStore
      * 
      * @return \Alnaggar\Muhawil\Loaders\YamlFileLoader
      */
-    protected function constructLoader() : YamlFileLoader
+    protected function constructLoader(): YamlFileLoader
     {
         return new YamlFileLoader;
     }
@@ -51,7 +52,7 @@ class YamlStore extends StructuredFileStore
      * 
      * @return \Alnaggar\Muhawil\Dumpers\YamlFileDumper
      */
-    protected function constructDumper() : YamlFileDumper
+    protected function constructDumper(): YamlFileDumper
     {
         return new YamlFileDumper;
     }
@@ -69,7 +70,7 @@ class YamlStore extends StructuredFileStore
     /**
      * {@inheritDoc}
      */
-    public function extensions() : array
+    public function extensions(): array
     {
         return ['yaml', 'yml'];
     }

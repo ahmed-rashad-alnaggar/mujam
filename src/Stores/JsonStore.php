@@ -27,13 +27,14 @@ class JsonStore extends FlatFileStore
      * 
      * @param array<string>|string $paths
      * @param int $flags
+     * @param array<string, string>|bool $cache
      * @return void
      */
-    public function __construct($paths, int $flags = JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+    public function __construct($paths, int $flags = JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT, $cache = false)
     {
         $this->flags = $flags;
 
-        parent::__construct($paths);
+        parent::__construct($paths, $cache);
     }
 
     /**

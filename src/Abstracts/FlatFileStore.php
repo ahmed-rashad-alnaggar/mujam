@@ -4,6 +4,8 @@ namespace Alnaggar\Mujam\Abstracts;
 
 use Alnaggar\Mujam\Contracts\FlatStore;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Symfony\Component\Finder\Glob as SymfonyGlob;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
@@ -34,16 +36,20 @@ abstract class FlatFileStore extends FileStore implements FlatStore
      */
     public function getAll($locale = null, $fallback = null): array
     {
-        $translations = [];
-
         $locale = $locale ?? $this->translator->getLocale();
 
-        $files = $this->getFiles($locale);
+        $translations = $this->remember($locale, function () use ($locale): array {
+            $translations = [];
 
-        foreach ($files as $file) {
-            $fileTranslations = $this->loadTranslations($file);
-            $translations = array_replace($translations, $fileTranslations);
-        }
+            $files = $this->getFiles($locale);
+
+            foreach ($files as $file) {
+                $fileTranslations = $this->loadTranslations($file);
+                $translations = array_replace($translations, $fileTranslations);
+            }
+
+            return $translations;
+        });
 
         if ($fallback !== false) {
             $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
@@ -102,6 +108,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
         }
 
         // Clear cached translations.
+        $this->forget($locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -130,6 +137,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
         }
 
         // Clear cached translations.
+        $this->forget($locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -149,9 +157,47 @@ abstract class FlatFileStore extends FileStore implements FlatStore
         }
 
         // Clear cached translations.
+        $this->forget($locale);
         $this->translator->setLoaded([]);
 
         return $this;
+    }
+
+    /**
+     * Retrieve and cache translations for the given locale.
+     *
+     * @param string $locale
+     * @param \Closure $callback
+     * @return array
+     */
+    protected function remember(string $locale, \Closure $callback): array
+    {
+        if ($this->cacheEnabled) {
+            if (! Str::contains($locale, ['*', '|'])) {
+                return Cache::store($this->cacheStore)
+                    ->remember("{$this->cachePrefix}.{$locale}", $this->cacheLifetime, $callback);
+            }
+        }
+
+        return $callback();
+    }
+
+    /**
+     * Forget cached translations for the given locale(s).
+     *
+     * @param string $locale
+     * @return void
+     */
+    protected function forget(string $locale): void
+    {
+        if ($this->cacheEnabled) {
+            $locales = $locale === '*' ? $this->getLocales() : explode('|', $locale);
+
+            foreach ($locales as $targetLocale) {
+                Cache::store($this->cacheStore)
+                    ->forget("{$this->cachePrefix}.{$targetLocale}");
+            }
+        }
     }
 
     /**

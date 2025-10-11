@@ -4,6 +4,8 @@ namespace Alnaggar\Mujam\Abstracts;
 
 use Alnaggar\Mujam\Contracts\StructuredStore;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 abstract class StructuredFileStore extends FileStore implements StructuredStore
@@ -46,16 +48,20 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      */
     public function getAll($group, $namespace = '*', $locale = null, $fallback = null): array
     {
-        $translations = [];
-
         $locale = $locale ?? $this->translator->getLocale();
 
-        $files = $this->getFiles($group, $namespace, $locale);
+        $translations = $this->remember($group, $namespace, $locale, function () use ($group, $namespace, $locale): array {
+            $translations = [];
 
-        foreach ($files as $file) {
-            $fileTranslations = Arr::dot($this->loadTranslations($file));
-            $translations = array_replace($translations, $fileTranslations);
-        }
+            $files = $this->getFiles($group, $namespace, $locale);
+
+            foreach ($files as $file) {
+                $fileTranslations = Arr::dot($this->loadTranslations($file));
+                $translations = array_replace($translations, $fileTranslations);
+            }
+
+            return $translations;
+        });
 
         if ($fallback !== false) {
             $fallback = is_string($fallback) ? $fallback : $this->translator->getFallback();
@@ -137,6 +143,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         }
 
         // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -163,6 +170,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         }
 
         // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
 
         return $this;
@@ -208,9 +216,99 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         }
 
         // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
 
         return $this;
+    }
+
+    /**
+     * Retrieve and cache translations for the given namespace, group, and locale.
+     *
+     * @param string $group
+     * @param string|null $namespace
+     * @param string $locale
+     * @param \Closure $callback
+     * @return array
+     */
+    protected function remember(string $group, ?string $namespace, string $locale, \Closure $callback): array
+    {
+        if ($this->cacheEnabled) {
+            if (! is_null($namespace)) {
+                if (! Str::contains($namespace, '|')) {
+                    if (! Str::contains($locale, ['*', '|'])) {
+                        if (! Str::contains($group, '*')) {
+                            return Cache::store($this->cacheStore)
+                                ->remember("{$this->cachePrefix}.{$namespace}.{$locale}.{$group}", $this->cacheLifetime, $callback);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $callback();
+    }
+
+    /**
+     * Forget cached translations for the given namespace(s), group(s), and locale(s).
+     *
+     * @param string $group
+     * @param string|null $namespace
+     * @param string $locale
+     * @return void
+     */
+    protected function forget(string $group, ?string $namespace, string $locale): void
+    {
+        if (! $this->cacheEnabled) {
+            return;
+        }
+
+        if (! is_null($namespace)) {
+            if (! Str::contains($namespace, '|')) {
+                if (! Str::contains($locale, ['*', '|'])) {
+                    if (! Str::contains($group, '*')) {
+                        Cache::store($this->cacheStore)
+                            ->forget("{$this->cachePrefix}.{$namespace}.{$locale}.{$group}");
+
+                        return;
+                    }
+                }
+            }
+        }
+
+        $keyCombinations = [];
+        $storeStructure = $this->getStructure();
+
+        $targetNamespaces = is_null($namespace)
+            ? array_keys($storeStructure)
+            : explode('|', $namespace);
+
+        $targetLocales = ($locale === '*')
+            ? null // A null value will signify a wildcard match later
+            : explode('|', $locale);
+
+        foreach ($storeStructure as $currentNamespace => $locales) {
+            if (! in_array($currentNamespace, $targetNamespaces)) {
+                continue;
+            }
+
+            foreach ($locales as $currentLocale => $groups) {
+                if (! is_null($targetLocales) && ! in_array($currentLocale, $targetLocales)) {
+                    continue;
+                }
+
+                foreach ($groups as $currentGroup) {
+                    if ($group === '*' || $currentGroup === $group) {
+                        $keyCombinations[] = "{$currentNamespace}.{$currentLocale}.{$currentGroup}";
+                    }
+                }
+            }
+        }
+
+        foreach ($keyCombinations as $keyCombination) {
+            Cache::store($this->cacheStore)
+                ->forget("{$this->cachePrefix}.{$keyCombination}");
+        }
     }
 
     /**
