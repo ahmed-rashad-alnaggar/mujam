@@ -292,7 +292,7 @@ The `locale` parameter specifies the locale for which translations should be rem
 - If a specific locale is provided, translations are removed from that locale.
 - Multiple locales can also be provided, separated by `|`.
 
-### Checking for a Translation
+### Checking Translation Existence
 
 ```php
 if (Mujam::store('php')->has(
@@ -473,8 +473,32 @@ class Post extends Model
 }
 ```
 
+All translatable attribute columns are left empty or set to `null` (nested translatable attributes are always `null`), as their content is managed by the trait.
+
 > [!NOTE]
 > Defining translatables is optional — the trait can automatically discover existing translation keys (e.g., seeded or pre-stored).
+>
+> This is particularly useful for models with dynamic or varied options, such as a `Setting` model, where different groups (e.g., general settings, localization settings, etc.) may each have their own translations.
+>
+> ```php
+> class SettingSeeder extends Seeder
+> {
+>    public function run()
+>    {
+>        // Any attributes set using setTranslation will be automatically discovered 
+>        // if the Setting model does not override and define the translatables() method.
+>        $generalSettings = Setting::create([
+>           'key' => 'general'
+>           'value' => [
+>               'app_name' => null,
+>               'app_timezone' => config('app.timezone')
+>           ]
+>        ]);
+>        $generalSettings->setTranslation('value.app_name', 'Mujam', 'en')
+>        $generalSettings->save();
+>    }
+> }
+> ```
 
 ### Retrieving Model Translations
 
@@ -566,7 +590,7 @@ $post->save(); // Updates/Adds/Removes translations in the configured store
 
 **When the model is deleted, all associated translations are automatically flushed.**
 
-### Checking Translations
+### Checking Model Translation Existence
 
 You can check if a translation exists for a specific key and locale:
 
