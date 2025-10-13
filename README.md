@@ -494,7 +494,7 @@ All translatable attribute columns are left empty or set to `null` (nested trans
 >               'app_timezone' => config('app.timezone')
 >           ]
 >        ]);
->        $generalSettings->setTranslation('value.app_name', 'Mujam', 'en')
+>        $generalSettings->setTranslation('value.app_name', 'Mujam', 'en');
 >        $generalSettings->save();
 >    }
 > }
