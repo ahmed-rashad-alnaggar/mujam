@@ -488,7 +488,7 @@ All translatable attribute columns are left empty or set to `null` (nested trans
 >        // Any attributes set using setTranslation will be automatically discovered 
 >        // if the Setting model does not override and define the translatables() method.
 >        $generalSettings = Setting::create([
->           'key' => 'general'
+>           'key' => 'general',
 >           'value' => [
 >               'app_name' => null,
 >               'app_timezone' => config('app.timezone')
