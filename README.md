@@ -35,7 +35,7 @@ php artisan vendor:publish --tag="mujam-config"
 ```
 
 > [!NOTE]  
-> If you intend to use the [database store](#database-store), either publish the default migration or create your own table and update the store config.
+> If you intend to use the [database store](#database-store) or [Eloquent model translations](#eloquent-integration--hastranslations-trait), either publish the default migrations or create your own and update `config/mujam.php` accordingly.
 >
 > ```bash
 > php artisan vendor:publish --tag="mujam-migrations"
