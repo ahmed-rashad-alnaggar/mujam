@@ -3,7 +3,6 @@
 namespace Alnaggar\Mujam\Abstracts;
 
 use Alnaggar\Mujam\Contracts\FlatStore;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Symfony\Component\Finder\Glob as SymfonyGlob;
@@ -56,7 +55,7 @@ abstract class FlatFileStore extends FileStore implements FlatStore
 
             if ($locale !== $fallback) {
                 $fallbackTranslations = $this->getAll($fallback, false);
-                $translations = array_replace($fallbackTranslations, Arr::whereNotNull($translations));
+                $translations = array_replace($fallbackTranslations, $translations);
             }
         }
 
@@ -96,15 +95,25 @@ abstract class FlatFileStore extends FileStore implements FlatStore
      */
     public function update(array $translations, $locale = null)
     {
+        [$translations, $translationsToRemove] = collect($translations)->partition(
+            static function ($translation): bool {
+                return ! is_null($translation);
+            }
+        );
+
         $locale = $locale ?? $this->translator->getLocale();
 
         $files = $this->getFilesForUpsert($locale);
 
         foreach ($files as $file) {
             $oldTranslations = $this->loadTranslations($file);
-            $newTranslations = array_replace($oldTranslations, $translations);
+            $newTranslations = array_replace($oldTranslations, $translations->toArray());
 
             $this->dumpTranslations($newTranslations, $file);
+        }
+
+        if ($translationsToRemove->isNotEmpty()) {
+            return $this->remove($translationsToRemove->keys()->toArray(), $locale);
         }
 
         // Clear cached translations.
@@ -215,16 +224,16 @@ abstract class FlatFileStore extends FileStore implements FlatStore
         $basePath = $this->getPaths()[0];
         $extension = $this->extensions()[0];
 
-        foreach ($locales as $locale) {
-            $resolvedFiles = $this->getFiles($locale);
+        foreach ($locales as $targetLocale) {
+            $resolvedFiles = $this->getFiles($targetLocale);
 
             // If translations are being added for a newly supported locale
             // and the corresponding files do not exist,
             // construct the file path so that the dumper can create the appropriate file.
             if (empty($resolvedFiles)) {
                 // Ensure this is not a mass operation.
-                if ($locale !== '*') {
-                    $subPathname = "{$locale}.{$extension}";
+                if ($targetLocale !== '*') {
+                    $subPathname = "{$targetLocale}.{$extension}";
 
                     $resolvedFiles[] = new SymfonySplFileInfo("{$basePath}/{$subPathname}", '', $subPathname);
                 }

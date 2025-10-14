@@ -123,6 +123,7 @@ return [
             'columns' => [
                 'namespace' => 'namespace',
                 'group' => 'group',
+                'item'=> 'item',
                 'locale' => 'locale',
                 'value' => 'value',
                 'created_at' => 'created_at',
@@ -150,10 +151,11 @@ return [
     'model_translations_store' => [
         'driver' => 'database',
         'connection' => null,
-        'table' => 'translations',
+        'table' => 'model_translations',
         'columns' => [
             'namespace' => 'namespace',
             'group' => 'group',
+            'item'=> 'item',
             'locale' => 'locale',
             'value' => 'value',
             'created_at' => 'created_at',

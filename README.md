@@ -330,7 +330,15 @@ $storeStructure = Mujam::store('php')->getStructure();
 
 ### Using Laravel's Translation Functions
 
-You can also use Laravel's `__` function or any other translation retrieval function, which will fetch translations from the provided and enabled stores.
+You can also use Laravel's `__` helper function or any other translation retrieval function, which will fetch translations from the provided and enabled stores.
+
+```php
+// Fetches the translation from the enabled stores.
+$welcomeMessage = __('messages.welcome');
+
+// Package translations continue to work as expected.
+$packageTranslation = __('packageNamespace::group.item');
+```
 
 ## Stores
 
@@ -341,12 +349,13 @@ You can also use Laravel's `__` function or any other translation retrieval func
   - `connection`: The database connection to use.
   - `table`: The table name to store translations in.
   - `columns`:
-    - `namespace`: The column name for the namespace.
-    - `group`: The column name for the group.
-    - `locale`: The column name for the locale.
+    - `namespace`: The column name for the translation namespace.
+    - `group`: The column name for the translation group.
+    - `item`: The column name for the translation item.
+    - `locale`: The column name for the translation locale.
     - `value`: The column name for the translation value.
-    - `created_at`: The column name for the created_at timestamp.
-    - `updated_at`: The column name for the updated_at timestamp.
+    - `created_at`: The column name for the translation created_at timestamp.
+    - `updated_at`: The column name for the translation updated_at timestamp.
 
 ### JSON Store
 

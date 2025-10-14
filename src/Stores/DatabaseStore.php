@@ -48,6 +48,13 @@ class DatabaseStore implements StructuredStore
     protected $groupColumnName;
 
     /**
+     * Item column name in the database table.
+     * 
+     * @var string
+     */
+    protected $itemColumnName;
+
+    /**
      * Locale column name in the database table.
      * 
      * @var string
@@ -119,6 +126,7 @@ class DatabaseStore implements StructuredStore
         $this->table = $table;
         $this->namespaceColumnName = $columns['namespace'];
         $this->groupColumnName = $columns['group'];
+        $this->itemColumnName = $columns['item'];
         $this->localeColumnName = $columns['locale'];
         $this->valueColumnName = $columns['value'];
         $this->createdAtColumnName = $columns['created_at'];
@@ -168,16 +176,9 @@ class DatabaseStore implements StructuredStore
         $locale = $locale ?? $this->translator->getLocale();
 
         $translations = $this->remember($group, $namespace, $locale, function () use ($group, $namespace, $locale): array {
-            $translations = [];
-
-            $values = $this->getRecords($group, $namespace, $locale)->get($this->valueColumnName)->toArray();
-
-            foreach ($values as $value) {
-                $dbTranslations = json_decode($value->{$this->valueColumnName}, true);
-                $translations = array_replace($translations, $dbTranslations);
-            }
-
-            return $translations;
+            return $this->getRecords($group, $namespace, $locale, null)
+                ->pluck($this->valueColumnName, $this->itemColumnName)
+                ->toArray();
         });
 
         if ($fallback !== false) {
@@ -185,11 +186,11 @@ class DatabaseStore implements StructuredStore
 
             if ($locale !== $fallback) {
                 $fallbackTranslations = $this->getAll($group, $namespace, $fallback, false);
-                $translations = array_replace($fallbackTranslations, Arr::whereNotNull($translations));
+                $translations = array_replace($fallbackTranslations, $translations);
             }
         }
 
-        return Arr::undot($translations);
+        return $translations;
     }
 
     /**
@@ -199,9 +200,8 @@ class DatabaseStore implements StructuredStore
     {
         $structure = [];
 
-        $records = $this->getRecords('*', null, '*')
-            ->get([$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName])
-            ->toArray();
+        $records = $this->getRecords('*', null, '*', null) // Build table query
+            ->get([$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName]);
 
         foreach ($records as $record) {
             $namespace = $record->{$this->namespaceColumnName};
@@ -227,20 +227,21 @@ class DatabaseStore implements StructuredStore
      */
     public function update(array $translations, $group, $namespace = '*', $locale = null)
     {
-        $translations = Arr::dot($translations);
+        [$translations, $translationsToRemove] = collect(Arr::dot($translations))->partition(
+            static function ($translation): bool {
+                return ! is_null($translation);
+            }
+        );
 
         $locale = $locale ?? $this->translator->getLocale();
 
-        $records = $this->getRecordsForUpsert($group, $namespace, $locale);
+        $records = $this->getRecordsForUpsert($group, $namespace, $locale, $translations->keys()->toArray());
         $records = array_map(static function ($record): array {
             return get_object_vars($record);
         }, $records);
 
-        array_walk($records, function (&$record) use ($translations) {
-            $oldTranslations = json_decode($record[$this->valueColumnName], true);
-            $newTranslations = array_replace($oldTranslations, $translations);
-
-            $record[$this->valueColumnName] = json_encode($newTranslations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        array_walk($records, function (&$record) use ($translations): void {
+            $record[$this->valueColumnName] = $translations[$record[$this->itemColumnName]];
 
             if (isset($record[$this->updatedAtColumnName])) {
                 $record[$this->updatedAtColumnName] = Date::now();
@@ -251,12 +252,16 @@ class DatabaseStore implements StructuredStore
             }
         });
 
-        $this->getRecords('*', null, '*') // Build table query
+        $this->getRecords('*', null, '*', null) // Build table query
             ->upsert(
                 $records,
-                [$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName],
-                [$this->valueColumnName, $this->createdAtColumnName, $this->updatedAtColumnName]
+                [$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName, $this->itemColumnName],
+                [$this->valueColumnName, $this->updatedAtColumnName]
             );
+
+        if ($translationsToRemove->isNotEmpty()) {
+            return $this->remove($translationsToRemove->keys()->toArray(), $group, $namespace, $locale);
+        }
 
         // Clear cached translations.
         $this->forget($group, $namespace, $locale);
@@ -272,35 +277,7 @@ class DatabaseStore implements StructuredStore
     {
         $locale = $locale ?? $this->translator->getLocale();
 
-        $records = $this->getRecords($group, $namespace, $locale)->get()->toArray();
-        $toUpdateRecords = [];
-        $toDeleteRecordLocales = [];
-
-        foreach ($records as $record) {
-            $translations = json_decode($record->{$this->valueColumnName}, true);
-            Arr::forget($translations, $items);
-
-            if (empty($translations)) {
-                $toDeleteRecordLocales[] = $record->{$this->localeColumnName};
-            } else {
-                $record->{$this->valueColumnName} = json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-                $record->{$this->updatedAtColumnName} = Date::now();
-                $toUpdateRecords[] = get_object_vars($record);
-            }
-        }
-
-        if (! empty($toUpdateRecords)) {
-            $this->getRecords('*', null, '*') // Build table query
-                ->upsert($toUpdateRecords,
-                    [$this->namespaceColumnName, $this->groupColumnName, $this->localeColumnName],
-                    [$this->valueColumnName, $this->updatedAtColumnName]
-                );
-        }
-
-        if (! empty($toDeleteRecordLocales)) {
-            $locales = implode('|', array_unique($toDeleteRecordLocales));
-            $this->getRecords($group, $namespace, $locales)->delete();
-        }
+        $this->getRecords($group, $namespace, $locale, $items)->delete();
 
         // Clear cached translations.
         $this->forget($group, $namespace, $locale);
@@ -316,7 +293,7 @@ class DatabaseStore implements StructuredStore
     {
         $locale = $locale ?? $this->translator->getLocale();
 
-        $this->getRecords($group, $namespace, $locale)->delete();
+        $this->getRecords($group, $namespace, $locale, null)->delete();
 
         // Clear cached translations.
         $this->forget($group, $namespace, $locale);
@@ -428,35 +405,52 @@ class DatabaseStore implements StructuredStore
      * @param string $group
      * @param string $namespace
      * @param string $locale
+     * @param array $items
      * @return array<array<string, string>>
      */
-    protected function getRecordsForUpsert(string $group, string $namespace, string $locale): array
+    protected function getRecordsForUpsert(string $group, string $namespace, string $locale, array $items): array
     {
         $records = [];
 
         $namespaces = explode('|', $namespace);
         $locales = explode('|', $locale);
 
-        foreach ($namespaces as $namespace) {
-            foreach ($locales as $locale) {
-                $resolvedRecords = $this->getRecords($group, $namespace, $locale)->get()->toArray();
+        foreach ($namespaces as $targetNamespace) {
+            foreach ($locales as $targetLocale) {
+                $recordItemsToCreate = $items;
 
-                // Format a new record if there are no records matching the passed namespace, group, and locale,
-                // so that the Builder's upsert function can create it.
-                if (empty($resolvedRecords)) {
-                    // Ensure this is not a mass operation.
-                    if ($group !== '*' && $locale !== '*') {
-                        $record = new \stdClass;
-                        $record->{$this->namespaceColumnName} = $namespace;
-                        $record->{$this->groupColumnName} = $group;
-                        $record->{$this->localeColumnName} = $locale;
-                        $record->{$this->valueColumnName} = '{}';
+                $resolvedRecords = $this->getRecords($group, $targetNamespace, $targetLocale, $items)
+                    ->get([
+                        $this->namespaceColumnName,
+                        $this->groupColumnName,
+                        $this->itemColumnName,
+                        $this->localeColumnName,
+                        $this->valueColumnName,
+                        $this->createdAtColumnName,
+                        $this->updatedAtColumnName
+                    ]);
 
-                        $resolvedRecords[] = $record;
-                    }
+                foreach ($resolvedRecords as $record) {
+                    $recordItemToCreateIndex = array_search($record->{$this->itemColumnName}, $recordItemsToCreate);
+                    unset($recordItemsToCreate[$recordItemToCreateIndex]);
+
+                    $records[] = $record;
                 }
 
-                $records = array_merge($records, $resolvedRecords);
+                // Ensure this is not a mass operation.
+                if ($group !== '*' && $targetLocale !== '*') {
+                    // Format records for the missing items,
+                    // so that the Builder's upsert function can create them.
+                    foreach ($recordItemsToCreate as $recordItemToCreate) {
+                        $record = new \stdClass;
+                        $record->{$this->namespaceColumnName} = $targetNamespace;
+                        $record->{$this->groupColumnName} = $group;
+                        $record->{$this->itemColumnName} = $recordItemToCreate;
+                        $record->{$this->localeColumnName} = $targetLocale;
+
+                        $records[] = $record;
+                    }
+                }
             }
         }
 
@@ -464,14 +458,15 @@ class DatabaseStore implements StructuredStore
     }
 
     /**
-     * Build a "where" query to get the matching records for the passed namespace(s), group, and locale(s).
+     * Build a "where" query to get the matching records for the passed namespace(s), group, locale(s), and items.
      * 
      * @param string $group
      * @param string|null $namespace
      * @param string $locale
+     * @param array|null $items
      * @return \Illuminate\Database\Query\Builder
      */
-    protected function getRecords(string $group, ?string $namespace, string $locale): Builder
+    protected function getRecords(string $group, ?string $namespace, string $locale, ?array $items): Builder
     {
         $query = $this->getConnection()->table($this->table);
 
@@ -485,6 +480,10 @@ class DatabaseStore implements StructuredStore
 
         if ($locale !== '*') {
             $query->whereIn($this->localeColumnName, explode('|', $locale));
+        }
+
+        if (! is_null($items)) {
+            $query->whereIn($this->itemColumnName, $items);
         }
 
         return $query;

@@ -68,11 +68,11 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
 
             if ($locale !== $fallback) {
                 $fallbackTranslations = $this->getAll($group, $namespace, $fallback, false);
-                $translations = array_replace($fallbackTranslations, Arr::whereNotNull($translations));
+                $translations = array_replace($fallbackTranslations, $translations);
             }
         }
 
-        return Arr::undot($translations);
+        return $translations;
     }
 
     /**
@@ -129,7 +129,11 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      */
     public function update(array $translations, $group, $namespace = '*', $locale = null)
     {
-        $translations = Arr::dot($translations);
+        [$translations, $translationsToRemove] = collect(Arr::dot($translations))->partition(
+            static function ($translation): bool {
+                return ! is_null($translation);
+            }
+        );
 
         $locale = $locale ?? $this->translator->getLocale();
 
@@ -137,9 +141,13 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
 
         foreach ($files as $file) {
             $oldTranslations = Arr::dot($this->loadTranslations($file));
-            $newTranslations = array_replace($oldTranslations, $translations);
+            $newTranslations = array_replace($oldTranslations, $translations->toArray());
 
             $this->dumpTranslations($newTranslations, $file);
+        }
+
+        if ($translationsToRemove->isNotEmpty()) {
+            return $this->remove($translationsToRemove->keys()->toArray(), $group, $namespace, $locale);
         }
 
         // Clear cached translations.
@@ -154,18 +162,20 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      */
     public function remove(array $items, $group, $namespace = '*', $locale = null)
     {
+        $items = array_flip($items);
+
         $locale = $locale ?? $this->translator->getLocale();
 
         $files = $this->getFiles($group, $namespace, $locale);
 
         foreach ($files as $file) {
-            $translations = Arr::dot($this->loadTranslations($file));
-            Arr::forget($translations, $items);
+            $oldTranslations = Arr::dot($this->loadTranslations($file));
+            $newTranslations = array_diff_key($oldTranslations, $items);
 
-            if (empty($translations)) {
+            if (empty($newTranslations)) {
                 $this->deleteFile($file->getPathname());
             } else {
-                $this->dumpTranslations($translations, $file);
+                $this->dumpTranslations($newTranslations, $file);
             }
         }
 
@@ -330,19 +340,19 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         [$filename, $fileSubPath] = $this->parseGroup($group);
         $extension = $this->extensions()[0];
 
-        foreach ($namespaces as $namespace) {
-            $namespacePath = $namespace === '*' ? '' : "vendor/{$namespace}/";
+        foreach ($namespaces as $targetNamespace) {
+            $namespacePath = $targetNamespace === '*' ? '' : "vendor/{$targetNamespace}/";
 
-            foreach ($locales as $locale) {
-                $resolvedFiles = $this->getFiles($group, $namespace, $locale);
+            foreach ($locales as $targetLocale) {
+                $resolvedFiles = $this->getFiles($group, $targetNamespace, $targetLocale);
 
                 // If translations are being added for a newly supported namespace/locale
                 // and the corresponding files do not exist,
                 // construct the file path so that the dumper can create the appropriate file.
                 if (empty($resolvedFiles)) {
                     // Ensure this is not a mass operation.
-                    if ($group !== '*' && $locale !== '*') {
-                        $subPath = "{$namespacePath}{$locale}/{$fileSubPath}";
+                    if ($group !== '*' && $targetLocale !== '*') {
+                        $subPath = "{$namespacePath}{$targetLocale}/{$fileSubPath}";
                         $subPathname = "{$subPath}/{$filename}.{$extension}";
 
                         $resolvedFiles[] = new SymfonySplFileInfo("{$basePath}/{$subPathname}", $subPath, $subPathname);
@@ -376,7 +386,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         if (! is_null($namespace)) {
             $namespaces = explode('|', $namespace);
 
-            array_walk($namespaces, function (&$value) {
+            array_walk($namespaces, function (&$value): void {
                 if ($value === '*') {
                     $value = '^(?!vendor/)';
                 } else {

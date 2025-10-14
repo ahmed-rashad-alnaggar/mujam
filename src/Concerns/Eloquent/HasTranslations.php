@@ -76,7 +76,7 @@ trait HasTranslations
                 ->update($translations, $this->getKey(), static::class, $locale);
         }
 
-        $this->translations = array_replace_recursive($this->translationsToUpdate, $this->translations);
+        $this->translations = array_replace_recursive($this->translations, $this->translationsToUpdate);
 
         // Clear the cache.
         $this->translationsToUpdate = [];
@@ -157,8 +157,8 @@ trait HasTranslations
                 ?? null;
         }
 
-        // Handle the falling back here as we can not use the store `getAll()` function
-        // due to it may be a to update/add translation.
+        // Handle the falling back here as we can not use the store `getAll()` function,
+        // because the translation we are looking for may be a to update/add translation and not stored in the store yet.
         if (is_null($translation)) {
             if ($fallback !== false) {
                 $fallback = is_string($fallback) ? $fallback : app()->getFallbackLocale();
@@ -397,10 +397,8 @@ trait HasTranslations
     protected function getTranslations(string $locale): array
     {
         if ($this->exists) {
-            return Arr::dot(
-                $this->getTranslationStore()
-                    ->getAll($this->getKey(), static::class, $locale, false)
-            );
+            return $this->getTranslationStore()
+                ->getAll($this->getKey(), static::class, $locale, false);
         }
 
         return [];
