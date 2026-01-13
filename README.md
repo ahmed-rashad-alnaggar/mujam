@@ -15,7 +15,6 @@ The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which re
 - [Usage](#usage)
 - [Stores](#stores)
 - [Caching](#caching)
-- [Eloquent Integration](#eloquent-integration--hastranslations-trait)
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [License](#license)
@@ -35,7 +34,7 @@ php artisan vendor:publish --tag="mujam-config"
 ```
 
 > [!NOTE]  
-> If you intend to use the [database store](#database-store) or [Eloquent model translations](#eloquent-integration--hastranslations-trait), either publish the default migrations or create your own and update `config/mujam.php` accordingly.
+> If you intend to use the [database store](#database-store), publish the default migrations or create your own and update `config/mujam.php` accordingly.
 >
 > ```bash
 > php artisan vendor:publish --tag="mujam-migrations"
@@ -59,12 +58,6 @@ The configuration file `config/mujam.php` contains the following keys:
 
 > [!NOTE]
 > If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
-
-- **model_translations_store**: The default **structured** store name/config used by the [`HasTranslations`](#eloquent-integration--hastranslations-trait) trait for handling Eloquent model translations.
-
-> [!NOTE]
-> If the store you use for model translations is **dedicated exclusively** to that purpose, do **not** include it in the global `stores` list.
-Instead, define its configuration under the `model_translations_store` key directly.
 
 ## Flat and Structured Stores
 
@@ -446,168 +439,6 @@ Caching can be customized per store to control how long translations remain vali
 ```
 
 Caching can be disabled by setting `enabled` to `false`, or by setting the entire `cache` key to `false`.
-
-> [!NOTE]
-> It is strongly recommended to disable caching for [**Eloquent model translations**](#eloquent-integration--hastranslations-trait), as they frequently change, so caching will be impractical.
-
-## Eloquent Integration — `HasTranslations` Trait
-
-The `HasTranslations` trait provides an elegant way to integrate **Mujam**’s translation system directly into your **Eloquent models**.  
-It allows models to manage localized attributes seamlessly through any configured **structured store** ([database](#database-store) store recommended) using the `model_translations_store` key in `config/mujam.php`.
-
-### Setup The Trait
-
-Simply use the trait in your Eloquent model then define a dot-notated array of the translatable attributes:
-
-```php
-use Alnaggar\Mujam\Concerns\Eloquent\HasTranslations;
-
-class Post extends Model
-{
-    use HasTranslations;
-
-    /**
-     * The model's translatable attributes.
-     *
-     * @var array<string>
-     */
-    protected function translatables(): array
-    {
-        return [
-            'title',
-            'content',
-            'meta.description',
-        ];
-    }
-}
-```
-
-All translatable attribute columns are left empty or set to `null` (nested translatable attributes are always `null`), as their content is managed by the trait.
-
-> [!NOTE]
-> Defining translatables is optional — the trait can automatically discover existing translation keys (e.g., seeded or pre-stored).
->
-> This is particularly useful for models with dynamic or varied options, such as a `Setting` model, where different groups (e.g., general settings, localization settings, etc.) may each have their own translations.
->
-> ```php
-> class SettingSeeder extends Seeder
-> {
->    public function run()
->    {
->        // Any attributes set using setTranslation will be automatically discovered 
->        // if the Setting model does not override and define the translatables() method.
->        $generalSettings = Setting::create([
->           'key' => 'general',
->           'value' => [
->               'app_name' => null,
->               'app_timezone' => config('app.timezone')
->           ]
->        ]);
->        $generalSettings->setTranslation('value.app_name', 'Mujam', 'en');
->        $generalSettings->save();
->    }
-> }
-> ```
-
-### Retrieving Model Translations
-
-Retrieve a translated attribute directly through the model’s properties:
-
-```php
-$post = Post::find(1);
-
-$post->title; // Automatically returns the current locale translation
-```
-
-You can also manually specify a locale and fallback behavior:
-
-```php
-$post->getTranslation('title', 'fr'); // Returns French translation with falling back to the app fullback locale
-$post->getTranslation('title', 'fr', false); // No fallback
-$post->getTranslation('title', 'fr', 'ar');  // Fallbacks to Arabic
-```
-
-When dealing with nested attributes, the trait injects translations automatically:
-
-```php
-// Assuming 'meta.description' is translatable
-$post->meta; 
-// => ['description' => 'Translated value']
-```
-
-### Setting Model Translations
-
-Set translations per locale directly:
-
-```php
-$post->setTranslation('title', 'Welcome to Mujam!', 'en');
-$post->setTranslation('title', 'مرحباً بكم في معجم!', 'ar');
-
-// OR
-
-$post->setTranslation('title', [
-    'en' => 'Welcome to Mujam!',
-    'ar' => 'مرحباً بكم في معجم!',
-]);
-```
-
-Or use Laravel-style attribute syntax for the current app locale:
-
-```php
-$post->title = 'Bonjour à Mujam!';
-```
-
-You can also set nested attributes:
-
-```php
-$post->meta = [
-    'description' => 'A translations management project',
-];
-```
-
-### Removing Model Translations
-
-Remove translations for a specific key and locale:
-
-```php
-$post->title = null; // Remove translation for the current app locale
-
-//OR
-
-$post->removeTranslation('title', 'en');
-```
-
-You can also remove nested attributes:
-
-```php
-$post->meta = [
-    'description' => null
-];
-
-// OR
-
-$post->removeTranslation('meta.description', 'en');
-```
-
-### Saving & Persisting Model Translations
-
-All translation changes are **queued** and automatically persisted after the model is **saved**:
-
-```php
-$post->save(); // Updates/Adds/Removes translations in the configured store
-```
-
-**When the model is deleted, all associated translations are automatically flushed.**
-
-### Checking Model Translation Existence
-
-You can check if a translation exists for a specific key and locale:
-
-```php
-if ($post->hasTranslation('content', 'ar')) {
-    // Arabic translation exists
-}
-```
 
 ## Contributing
 

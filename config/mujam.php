@@ -137,30 +137,4 @@ return [
             ],
         ],*/
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Has Translations Trait Store
-    |--------------------------------------------------------------------------
-    |
-    | The **structured** store name/config used by the HasTranslations trait
-    | for handling Eloquent model translations.
-    |
-    */
-
-    'model_translations_store' => [
-        'driver' => 'database',
-        'connection' => null,
-        'table' => 'model_translations',
-        'columns' => [
-            'namespace' => 'namespace',
-            'group' => 'group',
-            'item'=> 'item',
-            'locale' => 'locale',
-            'value' => 'value',
-            'created_at' => 'created_at',
-            'updated_at' => 'updated_at',
-        ],
-        'cache' => false, // Frequent updates make caching impractical
-    ]
 ];
