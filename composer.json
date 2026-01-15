@@ -8,10 +8,13 @@
     ],
     "type": "library",
     "require": {
-        "php": "^7.3|^8.0",
+        "php": ">=7.3",
         "ext-json": "*",
         "alnaggar/muhawil": "^2.0",
-        "laravel/framework": "^8.0|^9.0|^10.0|^11.0|^12.0"
+        "illuminate/contracts": ">=8.0",
+        "illuminate/database": ">=8.0",
+        "illuminate/support": ">=8.0",
+        "illuminate/translation": ">=8.0"
     },
     "license": "MIT",
     "autoload": {

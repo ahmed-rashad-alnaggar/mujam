@@ -10,6 +10,7 @@ The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which re
 
 ## Table of Contents
 
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
@@ -18,6 +19,11 @@ The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which re
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [License](#license)
+
+## Requirements
+
+- PHP 7.3+
+- Laravel 8+
 
 ## Installation
 
