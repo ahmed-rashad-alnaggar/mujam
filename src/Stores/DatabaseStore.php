@@ -243,13 +243,9 @@ class DatabaseStore implements StructuredStore
         array_walk($records, function (&$record) use ($translations): void {
             $record[$this->valueColumnName] = $translations[$record[$this->itemColumnName]];
 
-            if (isset($record[$this->updatedAtColumnName])) {
-                $record[$this->updatedAtColumnName] = Date::now();
-            } else {
-                $timestamp = Date::now();
-                $record[$this->createdAtColumnName] = $timestamp;
-                $record[$this->updatedAtColumnName] = $timestamp;
-            }
+            $timestamp = Date::now();
+            $record[$this->createdAtColumnName] = $timestamp;
+            $record[$this->updatedAtColumnName] = $timestamp;
         });
 
         $this->getRecords('*', null, '*', null) // Build table query

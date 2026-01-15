@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('group');
             $table->string('item');
             $table->string('locale');
-            $table->text('value')->nullable();
+            $table->text('value');
             $table->timestamps();
 
             $table->primary(['namespace', 'group', 'item', 'locale']);

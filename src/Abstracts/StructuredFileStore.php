@@ -84,7 +84,7 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
 
         $files = $this->getFiles('*', null, '*');
 
-        $shiftSegment = static function (string &$path) {
+        $shiftSegment = static function (string &$path): string {
             $separatorPosition = strpos($path, DIRECTORY_SEPARATOR);
 
             $segment = substr($path, 0, $separatorPosition);
