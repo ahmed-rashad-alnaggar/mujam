@@ -29,7 +29,7 @@ return [
     | File-based drivers require two parameters: "driver" and "path".
     | The "path" parameter can be a single path or an array of paths.
     | Each driver has its own configuration as defined below.
-    | These configurations are based on the 'alnaggar/muhawil' package, which
+    | These configurations are based on the 'alnaggar/php-translation-files' package, which
     | is used for loading and dumping translations.
     |
     | The "database" driver requires two parameters: "driver" and "table".

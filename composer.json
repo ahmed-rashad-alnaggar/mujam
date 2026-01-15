@@ -14,7 +14,8 @@
         "illuminate/contracts": ">=8.0",
         "illuminate/database": ">=8.0",
         "illuminate/support": ">=8.0",
-        "illuminate/translation": ">=8.0"
+        "illuminate/translation": ">=8.0",
+        "symfony/finder": ">=5.4"
     },
     "license": "MIT",
     "autoload": {
