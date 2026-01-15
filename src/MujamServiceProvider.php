@@ -25,25 +25,7 @@ class MujamServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->registerCommands();
         $this->registerPublishes();
-    }
-
-    /**
-     * Register console commands.
-     * 
-     * @return void
-     */
-    public function registerCommands(): void
-    {
-        if (app()->runningInConsole()) {
-            $this->commands([
-                \Alnaggar\Mujam\Console\Commands\AddCommand::class,
-                \Alnaggar\Mujam\Console\Commands\UpdateCommand::class,
-                \Alnaggar\Mujam\Console\Commands\RemoveCommand::class,
-                \Alnaggar\Mujam\Console\Commands\FlushCommand::class
-            ]);
-        }
     }
 
     /**
