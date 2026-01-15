@@ -2,16 +2,16 @@
 
 namespace Alnaggar\Mujam\Stores;
 
-use Alnaggar\Muhawil\Dumpers\YamlFileDumper;
-use Alnaggar\Muhawil\Loaders\YamlFileLoader;
 use Alnaggar\Mujam\Abstracts\StructuredFileStore;
+use Alnaggar\PhpTranslationFiles\Formats\Yaml\YamlFileDumper;
+use Alnaggar\PhpTranslationFiles\Formats\Yaml\YamlFileLoader;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 /**
- * @property \Alnaggar\Muhawil\Loaders\YamlFileLoader $loader Translations loader.
- * @property \Alnaggar\Muhawil\Dumpers\YamlFileDumper $dumper Translations dumper.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Yaml\YamlFileLoader $loader Translations loader.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Yaml\YamlFileDumper $dumper Translations dumper.
  * 
- * @link https://github.com/ahmed-rashad-alnaggar/muhawil?tab=readme-ov-file#yaml
+ * @link https://github.com/ahmed-rashad-alnaggar/php-translation-files?tab=readme-ov-file#yaml
  */
 class YamlStore extends StructuredFileStore
 {
@@ -40,7 +40,7 @@ class YamlStore extends StructuredFileStore
     /**
      * Create new YamlFileLoader instance to handle loading YAML translation files.
      * 
-     * @return \Alnaggar\Muhawil\Loaders\YamlFileLoader
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Yaml\YamlFileLoader
      */
     protected function constructLoader(): YamlFileLoader
     {
@@ -50,7 +50,7 @@ class YamlStore extends StructuredFileStore
     /**
      * Create new YamlFileDumper instance to handle dumping YAML translation files.
      * 
-     * @return \Alnaggar\Muhawil\Dumpers\YamlFileDumper
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Yaml\YamlFileDumper
      */
     protected function constructDumper(): YamlFileDumper
     {

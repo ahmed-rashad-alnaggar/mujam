@@ -2,23 +2,23 @@
 
 namespace Alnaggar\Mujam\Stores;
 
-use Alnaggar\Muhawil\Dumpers\PhpFileDumper;
-use Alnaggar\Muhawil\Loaders\PhpFileLoader;
 use Alnaggar\Mujam\Abstracts\StructuredFileStore;
+use Alnaggar\PhpTranslationFiles\Formats\Php\PhpFileDumper;
+use Alnaggar\PhpTranslationFiles\Formats\Php\PhpFileLoader;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 /**
- * @property \Alnaggar\Muhawil\Loaders\PhpFileLoader $loader Translations loader.
- * @property \Alnaggar\Muhawil\Dumpers\PhpFileDumper $dumper Translations dumper.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Php\PhpFileLoader $loader Translations loader.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Php\PhpFileDumper $dumper Translations dumper.
  * 
- * @link https://github.com/ahmed-rashad-alnaggar/muhawil?tab=readme-ov-file#php
+ * @link https://github.com/ahmed-rashad-alnaggar/php-translation-files?tab=readme-ov-file#php
  */
 class PhpStore extends StructuredFileStore
 {
     /**
      * Create new PhpFileLoader instance to handle loading PHP translation files.
      * 
-     * @return \Alnaggar\Muhawil\Loaders\PhpFileLoader
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Php\PhpFileLoader
      */
     protected function constructLoader(): PhpFileLoader
     {
@@ -28,7 +28,7 @@ class PhpStore extends StructuredFileStore
     /**
      * Create new PhpFileDumper instance to handle dumping PHP translation files.
      * 
-     * @return \Alnaggar\Muhawil\Dumpers\PhpFileDumper
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Php\PhpFileDumper
      */
     protected function constructDumper(): PhpFileDumper
     {

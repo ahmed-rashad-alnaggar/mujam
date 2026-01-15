@@ -2,16 +2,16 @@
 
 namespace Alnaggar\Mujam\Stores;
 
-use Alnaggar\Muhawil\Dumpers\JsonFileDumper;
-use Alnaggar\Muhawil\Loaders\JsonFileLoader;
 use Alnaggar\Mujam\Abstracts\FlatFileStore;
+use Alnaggar\PhpTranslationFiles\Formats\Json\JsonFileDumper;
+use Alnaggar\PhpTranslationFiles\Formats\Json\JsonFileLoader;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 /**
- * @property \Alnaggar\Muhawil\Loaders\JsonFileLoader $loader Translations loader.
- * @property \Alnaggar\Muhawil\Dumpers\JsonFileDumper $dumper Translations dumper.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Json\JsonFileLoader $loader Translations loader.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Json\JsonFileDumper $dumper Translations dumper.
  * 
- * @link https://github.com/ahmed-rashad-alnaggar/muhawil?tab=readme-ov-file#json
+ * @link https://github.com/ahmed-rashad-alnaggar/php-translation-files?tab=readme-ov-file#json
  */
 class JsonStore extends FlatFileStore
 {
@@ -40,7 +40,7 @@ class JsonStore extends FlatFileStore
     /**
      * Create new JsonFileLoader instance to handle loading JSON translation files.
      * 
-     * @return \Alnaggar\Muhawil\Loaders\JsonFileLoader
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Json\JsonFileLoader
      */
     protected function constructLoader(): JsonFileLoader
     {
@@ -50,7 +50,7 @@ class JsonStore extends FlatFileStore
     /**
      * Create new JsonFileDumper instance to handle dumping JSON translation files.
      * 
-     * @return \Alnaggar\Muhawil\Dumpers\JsonFileDumper
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Json\JsonFileDumper
      */
     protected function constructDumper(): JsonFileDumper
     {

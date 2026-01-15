@@ -2,9 +2,9 @@
 
 namespace Alnaggar\Mujam\Abstracts;
 
-use Alnaggar\Muhawil\Interfaces\Dumper;
-use Alnaggar\Muhawil\Interfaces\Loader;
 use Alnaggar\Mujam\Contracts\Store;
+use Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileDumper;
+use Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileLoader;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException as SymfonyDirectoryNotFoundException;
 use Symfony\Component\Finder\Finder as SymfonyFinder;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
@@ -21,14 +21,14 @@ abstract class FileStore implements Store
     /**
      * Translations loader.
      * 
-     * @var \Alnaggar\Muhawil\Interfaces\Loader
+     * @var \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileLoader
      */
     protected $loader;
 
     /**
      * Translations dumper.
      * 
-     * @var \Alnaggar\Muhawil\Interfaces\Dumper
+     * @var \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileDumper
      */
     protected $dumper;
 
@@ -110,23 +110,23 @@ abstract class FileStore implements Store
     /**
      * Create new Loader instance to handle loading translations.
      * 
-     * @return \Alnaggar\Muhawil\Interfaces\Loader
+     * @return \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileLoader
      */
-    abstract protected function constructLoader(): Loader;
+    abstract protected function constructLoader(): TranslationFileLoader;
 
     /**
      * Create new Dumper instance to handle dumping translations.
      * 
-     * @return \Alnaggar\Muhawil\Interfaces\Dumper
+     * @return \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileDumper
      */
-    abstract protected function constructDumper(): Dumper;
+    abstract protected function constructDumper(): TranslationFileDumper;
 
     /**
      * Get the Loader instance being used.
      * 
-     * @return \Alnaggar\Muhawil\Interfaces\Loader
+     * @return \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileLoader
      */
-    public function getLoader(): Loader
+    public function getLoader(): TranslationFileLoader
     {
         return $this->loader;
     }
@@ -134,9 +134,9 @@ abstract class FileStore implements Store
     /**
      * Get the Dumper instance being used.
      * 
-     * @return \Alnaggar\Muhawil\Interfaces\Dumper
+     * @return \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileDumper
      */
-    public function getDumper(): Dumper
+    public function getDumper(): TranslationFileDumper
     {
         return $this->dumper;
     }
@@ -144,10 +144,10 @@ abstract class FileStore implements Store
     /**
      * Set the Loader to use.
      * 
-     * @param \Alnaggar\Muhawil\Interfaces\Loader $loader
+     * @param \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileLoader $loader
      * @return static
      */
-    public function setLoader(Loader $loader)
+    public function setLoader(TranslationFileLoader $loader)
     {
         $this->loader = $loader;
 
@@ -157,10 +157,10 @@ abstract class FileStore implements Store
     /**
      * Set the Dumper to use.
      * 
-     * @param \Alnaggar\Muhawil\Interfaces\Dumper $dumper
+     * @param \Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileDumper $dumper
      * @return static
      */
-    public function setDumper(Dumper $dumper)
+    public function setDumper(TranslationFileDumper $dumper)
     {
         $this->dumper = $dumper;
 

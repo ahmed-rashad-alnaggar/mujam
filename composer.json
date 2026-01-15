@@ -10,7 +10,7 @@
     "require": {
         "php": ">=7.3",
         "ext-json": "*",
-        "alnaggar/muhawil": "^2.0",
+        "alnaggar/php-translation-files": "^1.0",
         "illuminate/contracts": ">=8.0",
         "illuminate/database": ">=8.0",
         "illuminate/support": ">=8.0",

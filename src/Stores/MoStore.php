@@ -2,16 +2,16 @@
 
 namespace Alnaggar\Mujam\Stores;
 
-use Alnaggar\Muhawil\Dumpers\MoFileDumper;
-use Alnaggar\Muhawil\Loaders\MoFileLoader;
 use Alnaggar\Mujam\Abstracts\FlatFileStore;
+use Alnaggar\PhpTranslationFiles\Formats\Mo\MoFileDumper;
+use Alnaggar\PhpTranslationFiles\Formats\Mo\MoFileLoader;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 /**
- * @property \Alnaggar\Muhawil\Loaders\MoFileLoader $loader Translations loader.
- * @property \Alnaggar\Muhawil\Dumpers\MoFileDumper $dumper Translations dumper.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Mo\MoFileLoader $loader Translations loader.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Mo\MoFileDumper $dumper Translations dumper.
  * 
- * @link https://github.com/ahmed-rashad-alnaggar/muhawil?tab=readme-ov-file#mo
+ * @link https://github.com/ahmed-rashad-alnaggar/php-translation-files?tab=readme-ov-file#mo
  */
 class MoStore extends FlatFileStore
 {
@@ -60,7 +60,7 @@ class MoStore extends FlatFileStore
     /**
      * Create new MoFileLoader instance to handle loading MO translation files.
      * 
-     * @return \Alnaggar\Muhawil\Loaders\MoFileLoader
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Mo\MoFileLoader
      */
     protected function constructLoader(): MoFileLoader
     {
@@ -70,7 +70,7 @@ class MoStore extends FlatFileStore
     /**
      * Create new MoFileDumper instance to handle dumping MO translation files.
      * 
-     * @return \Alnaggar\Muhawil\Dumpers\MoFileDumper
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Mo\MoFileDumper
      */
     protected function constructDumper(): MoFileDumper
     {

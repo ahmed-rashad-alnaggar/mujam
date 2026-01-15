@@ -2,16 +2,16 @@
 
 namespace Alnaggar\Mujam\Stores;
 
-use Alnaggar\Muhawil\Dumpers\XliffFileDumper;
-use Alnaggar\Muhawil\Loaders\XliffFileLoader;
 use Alnaggar\Mujam\Abstracts\FlatFileStore;
+use Alnaggar\PhpTranslationFiles\Formats\Xliff\XliffFileDumper;
+use Alnaggar\PhpTranslationFiles\Formats\Xliff\XliffFileLoader;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
 /**
- * @property \Alnaggar\Muhawil\Loaders\XliffFileLoader $loader Translations loader.
- * @property \Alnaggar\Muhawil\Dumpers\XliffFileDumper $dumper Translations dumper.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Xliff\XliffFileLoader $loader Translations loader.
+ * @property \Alnaggar\PhpTranslationFiles\Formats\Xliff\XliffFileDumper $dumper Translations dumper.
  * 
- * @link https://github.com/ahmed-rashad-alnaggar/muhawil?tab=readme-ov-file#xliff
+ * @link https://github.com/ahmed-rashad-alnaggar/php-translation-files?tab=readme-ov-file#xliff
  */
 class XliffStore extends FlatFileStore
 {
@@ -49,7 +49,7 @@ class XliffStore extends FlatFileStore
     /**
      * Create new XliffFileLoader instance to handle loading XLIFF translation files.
      * 
-     * @return \Alnaggar\Muhawil\Loaders\XliffFileLoader
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Xliff\XliffFileLoader
      */
     protected function constructLoader(): XliffFileLoader
     {
@@ -59,7 +59,7 @@ class XliffStore extends FlatFileStore
     /**
      * Create new XliffFileDumper instance to handle dumping XLIFF translation files.
      * 
-     * @return \Alnaggar\Muhawil\Dumpers\XliffFileDumper
+     * @return \Alnaggar\PhpTranslationFiles\Formats\Xliff\XliffFileDumper
      */
     protected function constructDumper(): XliffFileDumper
     {
