@@ -103,7 +103,7 @@ The `fallback` parameter controls fallback behavior:
 
 Both flat and structured stores use the same function signature. Simply provide the translation `key` and the `locale` to get the translation for.
 
-### Retrieving Translation(s)
+### Retrieving Translations
 
 **For Flat Store**:
 
