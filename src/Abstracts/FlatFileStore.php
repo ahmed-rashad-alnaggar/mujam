@@ -95,13 +95,17 @@ abstract class FlatFileStore extends FileStore implements FlatStore
      */
     public function update(array $translations, $locale = null)
     {
+        $locale = $locale ?? $this->translator->getLocale();
+
+        // Clear cached translations.
+        $this->forget($locale);
+        $this->translator->setLoaded([]);
+
         [$translations, $translationsToRemove] = collect($translations)->partition(
             static function ($translation): bool {
                 return ! is_null($translation);
             }
         );
-
-        $locale = $locale ?? $this->translator->getLocale();
 
         $files = $this->getFilesForUpsert($locale);
 
@@ -116,10 +120,6 @@ abstract class FlatFileStore extends FileStore implements FlatStore
             return $this->remove($translationsToRemove->keys()->toArray(), $locale);
         }
 
-        // Clear cached translations.
-        $this->forget($locale);
-        $this->translator->setLoaded([]);
-
         return $this;
     }
 
@@ -129,8 +129,11 @@ abstract class FlatFileStore extends FileStore implements FlatStore
     public function remove(array $keys, $locale = null)
     {
         $keys = array_flip($keys);
-
         $locale = $locale ?? $this->translator->getLocale();
+
+        // Clear cached translations.
+        $this->forget($locale);
+        $this->translator->setLoaded([]);
 
         $files = $this->getFiles($locale);
 
@@ -145,10 +148,6 @@ abstract class FlatFileStore extends FileStore implements FlatStore
             }
         }
 
-        // Clear cached translations.
-        $this->forget($locale);
-        $this->translator->setLoaded([]);
-
         return $this;
     }
 
@@ -159,15 +158,15 @@ abstract class FlatFileStore extends FileStore implements FlatStore
     {
         $locale = $locale ?? $this->translator->getLocale();
 
+        // Clear cached translations.
+        $this->forget($locale);
+        $this->translator->setLoaded([]);
+
         $files = $this->getFiles($locale);
 
         foreach ($files as $file) {
             $this->deleteFile($file->getPathname());
         }
-
-        // Clear cached translations.
-        $this->forget($locale);
-        $this->translator->setLoaded([]);
 
         return $this;
     }

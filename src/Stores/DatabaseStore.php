@@ -227,13 +227,17 @@ class DatabaseStore implements StructuredStore
      */
     public function update(array $translations, $group, $namespace = '*', $locale = null)
     {
+        $locale = $locale ?? $this->translator->getLocale();
+
+        // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
+        $this->translator->setLoaded([]);
+
         [$translations, $translationsToRemove] = collect(Arr::dot($translations))->partition(
             static function ($translation): bool {
                 return ! is_null($translation);
             }
         );
-
-        $locale = $locale ?? $this->translator->getLocale();
 
         $records = $this->getRecordsForUpsert($group, $namespace, $locale, $translations->keys()->toArray());
         $records = array_map(static function ($record): array {
@@ -259,10 +263,6 @@ class DatabaseStore implements StructuredStore
             return $this->remove($translationsToRemove->keys()->toArray(), $group, $namespace, $locale);
         }
 
-        // Clear cached translations.
-        $this->forget($group, $namespace, $locale);
-        $this->translator->setLoaded([]);
-
         return $this;
     }
 
@@ -273,11 +273,11 @@ class DatabaseStore implements StructuredStore
     {
         $locale = $locale ?? $this->translator->getLocale();
 
-        $this->getRecords($group, $namespace, $locale, $items)->delete();
-
         // Clear cached translations.
         $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
+
+        $this->getRecords($group, $namespace, $locale, $items)->delete();
 
         return $this;
     }
@@ -289,11 +289,11 @@ class DatabaseStore implements StructuredStore
     {
         $locale = $locale ?? $this->translator->getLocale();
 
-        $this->getRecords($group, $namespace, $locale, null)->delete();
-
         // Clear cached translations.
         $this->forget($group, $namespace, $locale);
         $this->translator->setLoaded([]);
+
+        $this->getRecords($group, $namespace, $locale, null)->delete();
 
         return $this;
     }

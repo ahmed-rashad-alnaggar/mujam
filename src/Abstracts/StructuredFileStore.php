@@ -129,13 +129,17 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
      */
     public function update(array $translations, $group, $namespace = '*', $locale = null)
     {
+        $locale = $locale ?? $this->translator->getLocale();
+
+        // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
+        $this->translator->setLoaded([]);
+
         [$translations, $translationsToRemove] = collect(Arr::dot($translations))->partition(
             static function ($translation): bool {
                 return ! is_null($translation);
             }
         );
-
-        $locale = $locale ?? $this->translator->getLocale();
 
         $files = $this->getFilesForUpsert($group, $namespace, $locale);
 
@@ -150,10 +154,6 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             return $this->remove($translationsToRemove->keys()->toArray(), $group, $namespace, $locale);
         }
 
-        // Clear cached translations.
-        $this->forget($group, $namespace, $locale);
-        $this->translator->setLoaded([]);
-
         return $this;
     }
 
@@ -163,8 +163,11 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
     public function remove(array $items, $group, $namespace = '*', $locale = null)
     {
         $items = array_flip($items);
-
         $locale = $locale ?? $this->translator->getLocale();
+
+        // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
+        $this->translator->setLoaded([]);
 
         $files = $this->getFiles($group, $namespace, $locale);
 
@@ -179,10 +182,6 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
             }
         }
 
-        // Clear cached translations.
-        $this->forget($group, $namespace, $locale);
-        $this->translator->setLoaded([]);
-
         return $this;
     }
 
@@ -192,8 +191,11 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
     public function flush($group = '*', $namespace = null, $locale = '*')
     {
         $localeDirectories = [];
-
         $locale = $locale ?? $this->translator->getLocale();
+
+        // Clear cached translations.
+        $this->forget($group, $namespace, $locale);
+        $this->translator->setLoaded([]);
 
         $files = $this->getFiles($group, $namespace, $locale);
 
@@ -224,10 +226,6 @@ abstract class StructuredFileStore extends FileStore implements StructuredStore
         foreach ($localeDirectories as $localeDirectory) {
             $this->deleteEmptySubDirectories($localeDirectory);
         }
-
-        // Clear cached translations.
-        $this->forget($group, $namespace, $locale);
-        $this->translator->setLoaded([]);
 
         return $this;
     }
