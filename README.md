@@ -14,6 +14,7 @@ The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which re
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [Laravel Translation Functions](#laravel-translation-functions)
 - [Stores](#stores)
 - [Caching](#caching)
 - [Contributing](#contributing)
@@ -61,9 +62,6 @@ The configuration file `config/mujam.php` contains the following keys:
   - [yaml](#yaml-store)
   
   Refer to [creating custom store](#creating-custom-store) for guidance on supporting additional store types.
-
-> [!NOTE]
-> If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
 
 ## Flat and Structured Stores
 
@@ -327,7 +325,7 @@ For retrieving store structure:
 $storeStructure = Mujam::store('php')->getStructure();
 ```
 
-### Using Laravel's Translation Functions
+## Laravel Translation Functions
 
 You can also use Laravel's `__` helper function or any other translation retrieval function, which will fetch translations from the provided and enabled stores.
 
@@ -338,6 +336,9 @@ $welcomeMessage = __('messages.welcome');
 // Package translations continue to work as expected.
 $packageTranslation = __('packageNamespace::group.item');
 ```
+
+> [!NOTE]
+> If multiple stores provide a translation for the same key, the last one defined will override the previous ones.
 
 ## Stores
 
