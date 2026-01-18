@@ -4,6 +4,10 @@
 
 ![I Stand With Palestine Banner](./arts/PalestineBanner.svg)
 
+[![Latest Stable Version](https://img.shields.io/packagist/v/alnaggar/mujam)](https://packagist.org/packages/alnaggar/mujam)
+[![Total Downloads](https://img.shields.io/packagist/dt/alnaggar/mujam)](https://packagist.org/packages/alnaggar/mujam)
+[![License](https://img.shields.io/packagist/l/alnaggar/mujam)](https://packagist.org/packages/alnaggar/mujam)
+
 **Mujam** is a Laravel translation management package that provides a flexible way to handle translations in your application. It supports various translation stores and allows for easy customization.
 
 The name "**Mujam**" translates to "dictionary" or "lexicon" in Arabic, which reflects the purpose of the package as a translation management tool.
