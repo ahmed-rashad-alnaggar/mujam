@@ -5,7 +5,7 @@ namespace Alnaggar\Mujam\Abstracts;
 use Alnaggar\Mujam\Contracts\Store;
 use Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileDumper;
 use Alnaggar\PhpTranslationFiles\Abstracts\TranslationFileLoader;
-use Symfony\Component\Finder\Exception\DirectoryNotFoundException as SymfonyDirectoryNotFoundException;
+use Illuminate\Support\Facades\File;
 use Symfony\Component\Finder\Finder as SymfonyFinder;
 use Symfony\Component\Finder\SplFileInfo as SymfonySplFileInfo;
 
@@ -198,12 +198,19 @@ abstract class FileStore implements Store
     {
         $finder = SymfonyFinder::create();
 
-        foreach ($this->getPaths() as $path) {
-            try {
-                $finder->in($path);
-            } catch (SymfonyDirectoryNotFoundException $e) {
-                continue;
-            }
+        $paths = array_filter($this->getPaths(), static function (string $dir): bool {
+            return is_dir($dir);
+        });
+
+        if (empty($paths)) {
+            $dir = $this->getPaths()[0] ?? lang_path();
+            File::ensureDirectoryExists($dir);
+
+            $paths[] = $dir;
+        }
+
+        foreach ($paths as $path) {
+            $finder->in($path);
         }
 
         return $finder;
